@@ -45,9 +45,6 @@
   .brand { font-family: var(--display); font-size: 1.1rem; letter-spacing: 0.18em; color: var(--muted); }
   .brand b { color: var(--gold); font-weight: 400; }
   h1 { font-size: clamp(2.6rem, 8vw, 4.4rem); }
-  .specs { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 6px; }
-  .chip { border: 1px solid var(--line); border-radius: 999px; padding: 3px 12px; font-size: 0.85rem; color: var(--muted); background: var(--panel); }
-  .chip.fit { color: var(--gold-ink); background: var(--gold); border-color: var(--gold); font-weight: 700; letter-spacing: 0.08em; }
   .deadline { color: var(--gold); font-weight: 600; }
 
   .banner { border: 1px dashed var(--gold); color: var(--gold); border-radius: 10px; padding: 10px 14px; font-size: 0.9rem; }
@@ -67,7 +64,17 @@
   .swatch { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #555; flex: none; }
   .variant-title small { color: var(--muted); font-size: 0.85rem; margin-left: auto; }
 
-  .sizes { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+  .sizes { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 6px; }
+  .cuts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+  .cut { text-align: left; border: 1px solid var(--line); border-radius: 12px; background: var(--panel-2); color: var(--text); padding: 12px 14px; cursor: pointer; display: grid; gap: 4px; font: inherit; }
+  .cut:hover { border-color: #5a5646; }
+  .cut[aria-selected="true"] { border-color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); }
+  .cut-name { display: flex; align-items: baseline; gap: 10px; font-family: var(--display); font-size: 1.9rem; line-height: 1; letter-spacing: 0.04em; }
+  .cut[aria-selected="true"] .cut-name { color: var(--gold); }
+  .cut-count { margin-left: auto; font: 700 0.8rem var(--body); color: var(--gold-ink); background: var(--gold); border-radius: 999px; padding: 2px 9px; }
+  .cut-specs { color: var(--muted); font-size: 0.85rem; }
+  .sum .cut-row th { text-align: left; font-family: var(--display); font-weight: 400; font-size: 1.2rem; color: var(--gold); letter-spacing: 0.04em; background: var(--panel-2); }
+  .sum td.na { color: #3d3c38; }
   .size { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); display: grid; justify-items: center; gap: 4px; padding: 8px 2px 6px; transition: border-color .15s, background .15s; }
   .size.on { border-color: var(--gold); background: #2a2614; }
   .size-label { font-family: var(--display); font-size: 1.5rem; line-height: 1; background: none; border: 0; color: inherit; cursor: pointer; padding: 0 6px; }
@@ -157,7 +164,6 @@
   <header class="top">
     <div class="brand">GOT<b>YOUR</b>PRINT</div>
     <h1 id="title">Combat Life Saver</h1>
-    <div class="specs" id="specs"></div>
     <p class="deadline" id="deadline" hidden></p>
   </header>
 
@@ -170,14 +176,15 @@
     <section class="panel" aria-labelledby="pickTitle">
       <div class="panel-head">
         <h2 id="pickTitle">Vyberte velikost a počet kusů</h2>
-        <p>Klikněte na velikost, další kusy přidáte tlačítkem +.</p>
+        <p>Zvolte střih, klikněte na velikost, další kusy přidáte tlačítkem +.</p>
       </div>
+      <div class="cuts" id="cuts" role="tablist" aria-label="Střih trička"></div>
       <div class="variants" id="variants"></div>
     </section>
 
     <section class="panel" aria-labelledby="sizeTitle">
       <div class="panel-head">
-        <h2 id="sizeTitle">Tabulka velikostí</h2>
+        <h2 id="sizeTitle">Tabulka velikostí – <span id="sizeCut"></span></h2>
         <p>Rozměry v cm</p>
       </div>
       <div class="table-scroll"><table id="sizeTable"></table></div>
@@ -185,7 +192,7 @@
         Tip: změřte si tričko, které vám dobře sedí, a porovnejte.</p>
       <details>
         <summary>Zobrazit nákres měření</summary>
-        <img src="img/tabulka-velikosti.jpg" alt="Nákres trička s vyznačenými rozměry A, B a C" loading="lazy">
+        <img id="chartImg" src="" alt="Nákres trička s vyznačenými rozměry A, B a C" loading="lazy">
       </details>
     </section>
 
@@ -277,7 +284,6 @@ const CONFIG = {
   demoPassword: "tricka",       // heslo do správy jen pro ukázkový režim
 
   title: "Combat Life Saver",
-  specs: ["Klasický střih", "100% bavlna", "180 g/m²"],
   deadline: "",                 // např. "Objednávky přijímáme do 15. 10. 2026"
   price: 0,                     // cena za kus v Kč (0 = nezobrazovat)
 
@@ -285,21 +291,53 @@ const CONFIG = {
     { id: "cerna", name: "Černá", print: "bílý potisk", color: "#161616", img: "img/cerna.jpg" },
     { id: "oliva", name: "Oliva", print: "černý potisk", color: "#6b7042", img: "img/oliva.jpg" },
   ],
-  sizes: [
-    { id: "S",   a: 47, b: 70, c: 19.5 },
-    { id: "M",   a: 51, b: 72, c: 20.5 },
-    { id: "L",   a: 55, b: 74, c: 21.5 },
-    { id: "XL",  a: 59, b: 76, c: 22.5 },
-    { id: "2XL", a: 64, b: 78, c: 23.5 },
+
+  // Střihy triček – každý má vlastní velikosti a rozměry (A = šířka, B = délka, C = rukáv, v cm)
+  cuts: [
+    {
+      id: "fit", name: "FIT",
+      specs: ["Klasický střih", "100% bavlna", "180 g/m²"],
+      chart: "img/tabulka-fit.jpg",
+      sizes: [
+        { id: "S",   a: 47, b: 70, c: 19.5 },
+        { id: "M",   a: 51, b: 72, c: 20.5 },
+        { id: "L",   a: 55, b: 74, c: 21.5 },
+        { id: "XL",  a: 59, b: 76, c: 22.5 },
+        { id: "2XL", a: 64, b: 78, c: 23.5 },
+      ],
+    },
+    {
+      id: "everyday", name: "EVERYDAY",
+      specs: [],
+      chart: "img/tabulka-everyday.jpg",
+      sizes: [
+        { id: "XS",  a: 45.5, b: 71.5, c: 20 },
+        { id: "S",   a: 48.5, b: 73.5, c: 20.5 },
+        { id: "M",   a: 51.5, b: 75.5, c: 21 },
+        { id: "L",   a: 54.5, b: 77.5, c: 22 },
+        { id: "XL",  a: 57.5, b: 79.5, c: 23 },
+        { id: "2XL", a: 60.5, b: 81.5, c: 24 },
+        { id: "3XL", a: 65,   b: 82.5, c: 24.5 },
+      ],
+    },
   ],
 };
 
 /* ============================================================ */
 
 const $ = (id) => document.getElementById(id);
-const STORE_KEY = "gyp-order-" + CONFIG.title;
-const DEMO_KEY = "gyp-demo-orders-" + CONFIG.title;
-const itemKey = (v, s) => `${v.name} ${s.id}`;          // např. "Černá M"
+const STORE_KEY = "gyp-order-v2-" + CONFIG.title;
+const DEMO_KEY = "gyp-demo-orders-v2-" + CONFIG.title;
+const itemKey = (c, v, s) => `${c.name} ${v.name} ${s.id}`;   // např. "FIT Černá M"
+// všechny kombinace střih × barva × velikost v pořadí z nastavení
+const combos = () => CONFIG.cuts.flatMap((c) => CONFIG.variants.flatMap((v) => c.sizes.map((s) => ({ c, v, s, key: itemKey(c, v, s) }))));
+const sumKeys = (items, keys) => keys.reduce((a, k) => a + (Number(items[k]) || 0), 0);
+// všechny velikosti napříč střihy (pro souhrnnou tabulku)
+const allSizes = () => {
+  const order = ["XXS", "XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL"];
+  const ids = [...new Set(CONFIG.cuts.flatMap((c) => c.sizes.map((s) => s.id)))];
+  return ids.sort((a, b) => (order.indexOf(a) + 1 || 99) - (order.indexOf(b) + 1 || 99));
+};
 const cz = (n) => n.toLocaleString("cs-CZ");
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const fmtDate = (iso) => { const d = new Date(iso); return isNaN(d) ? "" : d.toLocaleString("cs-CZ", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }); };
@@ -353,13 +391,16 @@ const state = {
   id: saved?.id || null,
   submitted: saved?.submitted || null,
   items: { ...(saved?.items || {}) },
+  cut: CONFIG.cuts.some((c) => c.id === saved?.cut) ? saved.cut : CONFIG.cuts[0].id,
 };
+const currentCut = () => CONFIG.cuts.find((c) => c.id === state.cut);
 
 function persistDraft() {
   storageSet(STORE_KEY, {
     id: state.id,
     submitted: state.submitted,
     items: state.items,
+    cut: state.cut,
     name: $("fName").value,
     contact: $("fContact").value,
     note: $("fNote").value,
@@ -370,28 +411,21 @@ function persistDraft() {
 
 function buildShop() {
   $("title").textContent = CONFIG.title;
-  $("specs").innerHTML = `<span class="chip fit">FIT</span>` + CONFIG.specs.map((s) => `<span class="chip">${esc(s)}</span>`).join("");
   if (CONFIG.deadline) { $("deadline").textContent = CONFIG.deadline; $("deadline").hidden = false; }
   if (!CONFIG.scriptUrl) { $("demoPass").textContent = CONFIG.demoPassword; $("demoBanner").hidden = false; }
 
-  $("variants").innerHTML = CONFIG.variants.map((v) => `
-    <article class="variant" data-variant="${v.id}">
-      <figure data-zoom="${esc(v.img)}"><img src="${esc(v.img)}" alt="Tričko ${esc(v.name)} (${esc(v.print)}) – přední a zadní strana" loading="lazy"></figure>
-      <div class="variant-body">
-        <h3 class="variant-title"><span class="swatch" style="background:${v.color}"></span>${esc(v.name)}<small>${esc(v.print)}</small></h3>
-        <div class="sizes">
-          ${CONFIG.sizes.map((s) => `
-            <div class="size" data-key="${esc(itemKey(v, s))}">
-              <button type="button" class="size-label" data-add aria-label="${esc(v.name)} ${s.id}: přidat kus">${s.id}</button>
-              <div class="stepper">
-                <button type="button" data-minus aria-label="${esc(v.name)} ${s.id}: ubrat">−</button>
-                <output>0</output>
-                <button type="button" data-plus aria-label="${esc(v.name)} ${s.id}: přidat">+</button>
-              </div>
-            </div>`).join("")}
-        </div>
-      </div>
-    </article>`).join("");
+  $("cuts").innerHTML = CONFIG.cuts.map((c) => `
+    <button type="button" class="cut" role="tab" data-cut="${c.id}" aria-selected="false">
+      <span class="cut-name">${esc(c.name)}<span class="cut-count" hidden></span></span>
+      <span class="cut-specs">${esc([...c.specs, `velikosti ${c.sizes[0].id}–${c.sizes[c.sizes.length - 1].id}`].join(" · "))}</span>
+    </button>`).join("");
+  $("cuts").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-cut]");
+    if (!b || b.dataset.cut === state.cut) return;
+    state.cut = b.dataset.cut;
+    renderCut();
+    persistDraft();
+  });
 
   $("variants").addEventListener("click", (e) => {
     const fig = e.target.closest("[data-zoom]");
@@ -403,11 +437,40 @@ function buildShop() {
     if (e.target.closest("[data-plus]") || e.target.closest("[data-add]")) setQty(key, q + 1);
     else if (e.target.closest("[data-minus]")) setQty(key, q - 1);
   });
+  renderCut();
+}
 
-  const cols = CONFIG.sizes.map((s) => `<th scope="col">${s.id}</th>`).join("");
-  const row = (label, name, f) => `<tr><th scope="row"><span>${label}</span>${name}</th>${CONFIG.sizes.map((s) => `<td>${String(f(s)).replace(".", ",")}</td>`).join("")}</tr>`;
+// vykreslí velikosti a tabulku rozměrů pro zvolený střih
+function renderCut() {
+  const c = currentCut();
+  document.querySelectorAll(".cut").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.cut === c.id)));
+
+  $("variants").innerHTML = CONFIG.variants.map((v) => `
+    <article class="variant" data-variant="${v.id}">
+      <figure data-zoom="${esc(v.img)}"><img src="${esc(v.img)}" alt="Tričko ${esc(v.name)} (${esc(v.print)}) – přední a zadní strana" loading="lazy"></figure>
+      <div class="variant-body">
+        <h3 class="variant-title"><span class="swatch" style="background:${v.color}"></span>${esc(c.name)} ${esc(v.name)}<small>${esc(v.print)}</small></h3>
+        <div class="sizes">
+          ${c.sizes.map((s) => `
+            <div class="size" data-key="${esc(itemKey(c, v, s))}">
+              <button type="button" class="size-label" data-add aria-label="${esc(c.name)} ${esc(v.name)} ${s.id}: přidat kus">${s.id}</button>
+              <div class="stepper">
+                <button type="button" data-minus aria-label="${esc(c.name)} ${esc(v.name)} ${s.id}: ubrat">−</button>
+                <output>0</output>
+                <button type="button" data-plus aria-label="${esc(c.name)} ${esc(v.name)} ${s.id}: přidat">+</button>
+              </div>
+            </div>`).join("")}
+        </div>
+      </div>
+    </article>`).join("");
+
+  $("sizeCut").textContent = c.name;
+  $("chartImg").src = c.chart;
+  const cols = c.sizes.map((s) => `<th scope="col">${s.id}</th>`).join("");
+  const row = (label, name, f) => `<tr><th scope="row"><span>${label}</span>${name}</th>${c.sizes.map((s) => `<td>${String(f(s)).replace(".", ",")}</td>`).join("")}</tr>`;
   $("sizeTable").innerHTML = `<thead><tr><th scope="col">Velikost</th>${cols}</tr></thead><tbody>
     ${row("A", "Šířka", (s) => s.a)}${row("B", "Délka", (s) => s.b)}${row("C", "Rukáv", (s) => s.c)}</tbody>`;
+  renderItems();
 }
 
 function setQty(key, q) {
@@ -425,9 +488,17 @@ function renderItems() {
     cell.querySelector("output").textContent = q;
     cell.classList.toggle("on", q > 0);
   });
+  const c = currentCut();
   document.querySelectorAll(".variant").forEach((el) => {
     const v = CONFIG.variants.find((x) => x.id === el.dataset.variant);
-    el.classList.toggle("has-items", CONFIG.sizes.some((s) => state.items[itemKey(v, s)]));
+    el.classList.toggle("has-items", c.sizes.some((s) => state.items[itemKey(c, v, s)]));
+  });
+  document.querySelectorAll(".cut").forEach((b) => {
+    const cut = CONFIG.cuts.find((x) => x.id === b.dataset.cut);
+    const n = sumKeys(state.items, combos().filter((x) => x.c === cut).map((x) => x.key));
+    const badge = b.querySelector(".cut-count");
+    badge.hidden = !n;
+    badge.textContent = `${n} ks`;
   });
 
   const entries = orderedEntries(state.items);
@@ -441,10 +512,7 @@ function renderItems() {
 // položky v pořadí barev a velikostí z nastavení
 function orderedEntries(items) {
   const out = [];
-  CONFIG.variants.forEach((v) => CONFIG.sizes.forEach((s) => {
-    const k = itemKey(v, s);
-    if (items[k]) out.push([k, items[k]]);
-  }));
+  combos().forEach(({ key }) => { if (items[key]) out.push([key, items[key]]); });
   Object.keys(items).forEach((k) => { if (!out.some(([x]) => x === k)) out.push([k, items[k]]); });
   return out;
 }
@@ -573,19 +641,29 @@ function renderAdmin() {
   const totals = sumTotals(orders);
   const pieces = totalPieces(totals);
 
+  const all = combos();
   $("stats").innerHTML = [
     [orders.length, plural(orders.length, "objednávka", "objednávky", "objednávek")],
     [pieces, plural(pieces, "tričko celkem", "trička celkem", "triček celkem")],
-    ...CONFIG.variants.map((v) => [CONFIG.sizes.reduce((a, s) => a + (totals[itemKey(v, s)] || 0), 0), v.name.toLowerCase()]),
+    ...CONFIG.cuts.map((c) => [sumKeys(totals, all.filter((x) => x.c === c).map((x) => x.key)), c.name]),
+    ...CONFIG.variants.map((v) => [sumKeys(totals, all.filter((x) => x.v === v).map((x) => x.key)), v.name.toLowerCase()]),
     ...(CONFIG.price ? [[cz(pieces * CONFIG.price) + " Kč", "k vybrání"]] : []),
   ].map(([n, l]) => `<div class="stat"><b>${n}</b><span>${esc(l)}</span></div>`).join("");
 
-  const head = `<thead><tr><th scope="col">Barva</th>${CONFIG.sizes.map((s) => `<th scope="col">${s.id}</th>`).join("")}<th scope="col">Celkem</th></tr></thead>`;
-  const body = CONFIG.variants.map((v) => {
-    const cells = CONFIG.sizes.map((s) => totals[itemKey(v, s)] || 0);
-    return `<tr><th scope="row">${esc(v.name)}</th>${cells.map((c) => `<td class="${c ? "" : "zero"}">${c}</td>`).join("")}<td class="total">${cells.reduce((a, b) => a + b, 0)}</td></tr>`;
-  }).join("");
-  const foot = `<tfoot><tr><th scope="row">Celkem</th>${CONFIG.sizes.map((s) => `<td>${CONFIG.variants.reduce((a, v) => a + (totals[itemKey(v, s)] || 0), 0)}</td>`).join("")}<td>${pieces}</td></tr></tfoot>`;
+  const sizes = allSizes();
+  const head = `<thead><tr><th scope="col">Střih a barva</th>${sizes.map((id) => `<th scope="col">${id}</th>`).join("")}<th scope="col">Celkem</th></tr></thead>`;
+  const body = CONFIG.cuts.map((c) => `<tr class="cut-row"><th scope="rowgroup" colspan="${sizes.length + 2}">${esc(c.name)}</th></tr>` +
+    CONFIG.variants.map((v) => {
+      const cells = sizes.map((id) => {
+        const s = c.sizes.find((x) => x.id === id);
+        if (!s) return `<td class="na">–</td>`;
+        const n = totals[itemKey(c, v, s)] || 0;
+        return `<td class="${n ? "" : "zero"}">${n}</td>`;
+      }).join("");
+      const sum = sumKeys(totals, c.sizes.map((s) => itemKey(c, v, s)));
+      return `<tr><th scope="row">${esc(v.name)}</th>${cells}<td class="total">${sum}</td></tr>`;
+    }).join("")).join("");
+  const foot = `<tfoot><tr><th scope="row">Celkem</th>${sizes.map((id) => `<td>${sumKeys(totals, all.filter((x) => x.s.id === id).map((x) => x.key))}</td>`).join("")}<td>${pieces}</td></tr></tfoot>`;
   $("sumTable").innerHTML = head + `<tbody>${body}</tbody>` + foot;
 
   $("orders").innerHTML = orders.length ? orders.map((o, i) => `
@@ -628,11 +706,11 @@ $("orders").addEventListener("click", async (e) => {
 
 function exportText(orders, totals) {
   const lines = [`${CONFIG.title.toUpperCase()} – SOUHRN (${new Date().toLocaleDateString("cs-CZ")})`, ""];
-  CONFIG.variants.forEach((v) => {
-    const parts = CONFIG.sizes.map((s) => `${s.id}: ${totals[itemKey(v, s)] || 0}`);
-    const sum = CONFIG.sizes.reduce((a, s) => a + (totals[itemKey(v, s)] || 0), 0);
-    lines.push(`${v.name} (${v.print}) – ${parts.join(", ")} → celkem ${sum} ks`);
-  });
+  CONFIG.cuts.forEach((c) => CONFIG.variants.forEach((v) => {
+    const parts = c.sizes.map((s) => `${s.id}: ${totals[itemKey(c, v, s)] || 0}`);
+    const sum = sumKeys(totals, c.sizes.map((s) => itemKey(c, v, s)));
+    lines.push(`${c.name} ${v.name} (${v.print}) – ${parts.join(", ")} → celkem ${sum} ks`);
+  }));
   lines.push(`Celkem: ${totalPieces(totals)} ks, ${orders.length} ${plural(orders.length, "objednávka", "objednávky", "objednávek")}`, "", "OBJEDNÁVKY");
   orders.forEach((o, i) => {
     const items = orderedEntries(o.items || {}).map(([k, q]) => `${k} ×${q}`).join(", ");
@@ -657,7 +735,7 @@ $("copyBtn").addEventListener("click", async () => {
 
 $("csvBtn").addEventListener("click", () => {
   const orders = [...adminOrders].sort((a, b) => String(a.created).localeCompare(String(b.created)));
-  const keys = CONFIG.variants.flatMap((v) => CONFIG.sizes.map((s) => itemKey(v, s)));
+  const keys = combos().map((x) => x.key);
   const cell = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   const rows = [["Jméno", "Kontakt", "Poznámka", "Datum", ...keys, "Celkem"].map(cell).join(";")];
   orders.forEach((o) => rows.push([o.name, o.contact, o.note, fmtDate(o.updated || o.created),
