@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Combat Life Saver trička</title>
+<meta name="description" content="Objednávka triček Combat Life Saver – vyberte barvu, velikost a počet kusů.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    color-scheme: dark;
+    --ground: #0d0d0c;
+    --panel: #171716;
+    --panel-2: #20201e;
+    --line: #2e2e2b;
+    --text: #f3f2ee;
+    --muted: #9a988f;
+    --gold: #f0c02c;
+    --gold-ink: #16140c;
+    --ok: #7fcf8a;
+    --err: #ff7b6b;
+    --display: "Bebas Neue", "Oswald", "Arial Narrow", Impact, sans-serif;
+    --body: "Barlow", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { background: var(--ground); }
+  body {
+    margin: 0;
+    padding-inline: 16px;
+    background-color: var(--ground);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='220'%3E%3Cg transform='rotate(-18 260 110)' font-family='Impact,Arial Narrow,sans-serif' font-size='64' font-weight='700' fill='%23121211'%3E%3Ctext x='-120' y='80'%3EGOTYOURPRINTGOTYOURPRINT%3C/text%3E%3Ctext x='-300' y='180'%3EGOTYOURPRINTGOTYOURPRINT%3C/text%3E%3C/g%3E%3C/svg%3E");
+    color: var(--text);
+    font: 16px/1.5 var(--body);
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding-block: 28px 40px; display: grid; gap: 28px; }
+
+  h1, h2, h3 { font-family: var(--display); font-weight: 400; letter-spacing: 0.02em; line-height: 1; margin: 0; text-wrap: balance; }
+  h2 { font-size: 2rem; }
+  h3 { font-size: 1.45rem; }
+
+  .top { display: grid; gap: 6px; text-align: center; }
+  .brand { font-family: var(--display); font-size: 1.1rem; letter-spacing: 0.18em; color: var(--muted); }
+  .brand b { color: var(--gold); font-weight: 400; }
+  h1 { font-size: clamp(2.6rem, 8vw, 4.4rem); }
+  .specs { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 6px; }
+  .chip { border: 1px solid var(--line); border-radius: 999px; padding: 3px 12px; font-size: 0.85rem; color: var(--muted); background: var(--panel); }
+  .chip.fit { color: var(--gold-ink); background: var(--gold); border-color: var(--gold); font-weight: 700; letter-spacing: 0.08em; }
+  .deadline { color: var(--gold); font-weight: 600; }
+
+  .banner { border: 1px dashed var(--gold); color: var(--gold); border-radius: 10px; padding: 10px 14px; font-size: 0.9rem; }
+
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: grid; gap: 16px; }
+  .panel-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .panel-head p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+
+  /* Varianty */
+  .variants { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .variant { background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; display: grid; }
+  .variant.has-items { border-color: var(--gold); }
+  .variant figure { margin: 0; background: #0a0a0a; cursor: zoom-in; }
+  .variant figure img { display: block; width: 100%; height: auto; }
+  .variant-body { padding: 14px; display: grid; gap: 12px; }
+  .variant-title { display: flex; align-items: center; gap: 10px; }
+  .swatch { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #555; flex: none; }
+  .variant-title small { color: var(--muted); font-size: 0.85rem; margin-left: auto; }
+
+  .sizes { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+  .size { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); display: grid; justify-items: center; gap: 4px; padding: 8px 2px 6px; transition: border-color .15s, background .15s; }
+  .size.on { border-color: var(--gold); background: #2a2614; }
+  .size-label { font-family: var(--display); font-size: 1.5rem; line-height: 1; background: none; border: 0; color: inherit; cursor: pointer; padding: 0 6px; }
+  .stepper { display: flex; align-items: center; gap: 2px; }
+  .stepper button { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); font: 600 1rem/1 var(--body); cursor: pointer; padding: 0; }
+  .stepper button:hover { border-color: var(--gold); }
+  .stepper output { min-width: 18px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .size.on .stepper output { color: var(--gold); }
+
+  /* Tabulka velikostí */
+  .table-scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+  th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: center; }
+  thead th { font-family: var(--display); font-weight: 400; font-size: 1.25rem; color: var(--gold); letter-spacing: 0.04em; }
+  tbody th { text-align: left; font-weight: 600; white-space: nowrap; }
+  tbody th span { color: var(--gold); font-family: var(--display); font-size: 1.2rem; font-weight: 400; margin-right: 6px; }
+  .note { color: var(--muted); font-size: 0.85rem; margin: 0; }
+  details summary { cursor: pointer; color: var(--gold); font-weight: 600; }
+  details img { display: block; max-width: 360px; width: 100%; margin-top: 12px; border-radius: 10px; }
+
+  /* Formulář */
+  form { display: grid; gap: 14px; }
+  .fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+  label { display: grid; gap: 5px; font-size: 0.9rem; font-weight: 600; }
+  input, textarea {
+    font: 400 1rem var(--body); color: var(--text); background: var(--panel-2);
+    border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; width: 100%;
+  }
+  input:focus, textarea:focus, button:focus-visible, .size-label:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .recap { background: var(--panel-2); border-radius: 10px; padding: 12px 14px; display: grid; gap: 4px; }
+  .recap-empty { color: var(--muted); }
+  .recap-row { display: flex; justify-content: space-between; gap: 12px; }
+  .recap-total { border-top: 1px solid var(--line); padding-top: 6px; margin-top: 4px; font-weight: 700; }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .btn {
+    font: 400 1.35rem/1 var(--display); letter-spacing: 0.06em; border-radius: 10px; padding: 12px 22px;
+    border: 1px solid var(--line); background: var(--panel-2); color: var(--text); cursor: pointer;
+  }
+  .btn:hover { border-color: var(--gold); }
+  .btn.primary { background: var(--gold); color: var(--gold-ink); border-color: var(--gold); }
+  .btn.primary:hover { filter: brightness(1.08); }
+  .btn.small { font-size: 1.05rem; padding: 8px 14px; }
+  .btn.link { background: none; border: 0; color: var(--muted); font: 500 0.9rem var(--body); text-decoration: underline; padding: 4px; }
+  .btn:disabled { opacity: 0.55; cursor: wait; }
+  .status { margin: 0; font-weight: 600; }
+  .status.ok { color: var(--ok); }
+  .status.err { color: var(--err); }
+
+  /* Správa */
+  .admin-login { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+  .admin-login label { flex: 1 1 220px; }
+  .stats { display: flex; flex-wrap: wrap; gap: 10px; }
+  .stat { background: var(--panel-2); border-radius: 10px; padding: 10px 16px; }
+  .stat b { display: block; font-family: var(--display); font-weight: 400; font-size: 2rem; color: var(--gold); line-height: 1; }
+  .stat span { color: var(--muted); font-size: 0.85rem; }
+  .sum td.zero { color: #55544f; }
+  .sum tfoot td, .sum tfoot th, .sum td.total { font-weight: 700; color: var(--gold); }
+  .orders { display: grid; gap: 8px; }
+  .order { background: var(--panel-2); border-radius: 10px; padding: 12px 14px; display: grid; gap: 4px; }
+  .order-head { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; }
+  .order-head b { font-size: 1.05rem; }
+  .order-head span { color: var(--muted); font-size: 0.85rem; }
+  .order-head .del { margin-left: auto; }
+  .order-items { color: var(--gold); font-weight: 600; }
+  .order-note { color: var(--muted); font-size: 0.9rem; }
+  .confirm { display: inline-flex; gap: 6px; align-items: center; font-size: 0.85rem; }
+  textarea.export { font: 0.85rem/1.4 ui-monospace, Menlo, Consolas, monospace; min-height: 160px; }
+
+  .foot { text-align: center; color: var(--muted); font-size: 0.85rem; display: grid; gap: 6px; justify-items: center; }
+
+  dialog { border: 0; padding: 0; background: transparent; max-width: min(1100px, 96vw); }
+  dialog::backdrop { background: rgba(0,0,0,.85); }
+  dialog img { display: block; max-width: 100%; max-height: 88vh; border-radius: 10px; }
+  dialog button { position: absolute; top: 8px; right: 8px; }
+
+  @media (max-width: 420px) {
+    .panel { padding: 14px; }
+    .size-label { font-size: 1.3rem; }
+    .stepper button { width: 24px; height: 24px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">GOT<b>YOUR</b>PRINT</div>
+    <h1 id="title">Combat Life Saver</h1>
+    <div class="specs" id="specs"></div>
+    <p class="deadline" id="deadline" hidden></p>
+  </header>
+
+  <p class="banner" id="demoBanner" hidden>
+    Ukázkový režim: objednávky se ukládají jen v tomto prohlížeči. Heslo do správy objednávek je <b id="demoPass"></b>.
+  </p>
+
+  <!-- ===== Zákazník ===== -->
+  <main id="shop" class="wrap" style="padding:0">
+    <section class="panel" aria-labelledby="pickTitle">
+      <div class="panel-head">
+        <h2 id="pickTitle">Vyberte velikost a počet kusů</h2>
+        <p>Klikněte na velikost, další kusy přidáte tlačítkem +.</p>
+      </div>
+      <div class="variants" id="variants"></div>
+    </section>
+
+    <section class="panel" aria-labelledby="sizeTitle">
+      <div class="panel-head">
+        <h2 id="sizeTitle">Tabulka velikostí</h2>
+        <p>Rozměry v cm</p>
+      </div>
+      <div class="table-scroll"><table id="sizeTable"></table></div>
+      <p class="note">A = polovina obvodu hrudníku (šířka trička v podpaží), B = délka od ramene, C = délka rukávu.
+        Tip: změřte si tričko, které vám dobře sedí, a porovnejte.</p>
+      <details>
+        <summary>Zobrazit nákres měření</summary>
+        <img src="img/tabulka-velikosti.jpg" alt="Nákres trička s vyznačenými rozměry A, B a C" loading="lazy">
+      </details>
+    </section>
+
+    <section class="panel" aria-labelledby="formTitle">
+      <div class="panel-head">
+        <h2 id="formTitle">Vaše objednávka</h2>
+        <p id="savedInfo"></p>
+      </div>
+      <form id="orderForm" novalidate>
+        <div class="recap" id="recap"></div>
+        <div class="fields">
+          <label for="fName">Jméno a příjmení *
+            <input id="fName" name="name" required maxlength="100" autocomplete="name">
+          </label>
+          <label for="fContact">Telefon nebo e-mail *
+            <input id="fContact" name="contact" required maxlength="150" autocomplete="tel">
+          </label>
+        </div>
+        <label for="fNote">Poznámka
+          <textarea id="fNote" name="note" rows="2" maxlength="500" placeholder="např. útvar, kdy si tričko vyzvednete…"></textarea>
+        </label>
+        <div class="actions">
+          <button type="submit" class="btn primary" id="submitBtn">Odeslat objednávku</button>
+          <button type="button" class="btn link" id="cancelOrderBtn" hidden>Zrušit moji objednávku</button>
+          <span class="confirm" id="cancelConfirm" hidden>Opravdu zrušit?
+            <button type="button" class="btn small" id="cancelYes">Ano, zrušit</button>
+            <button type="button" class="btn small" id="cancelNo">Ne</button>
+          </span>
+        </div>
+        <p class="status" id="formStatus" role="status"></p>
+      </form>
+    </section>
+  </main>
+
+  <!-- ===== Správa ===== -->
+  <section class="panel" id="admin" hidden aria-labelledby="adminTitle">
+    <div class="panel-head">
+      <h2 id="adminTitle">Správa objednávek</h2>
+      <button type="button" class="btn link" id="adminClose">Zpět na objednávku</button>
+    </div>
+
+    <form class="admin-login" id="adminLogin">
+      <label for="adminPass">Heslo
+        <input id="adminPass" type="password" autocomplete="current-password" required>
+      </label>
+      <button type="submit" class="btn primary">Zobrazit objednávky</button>
+    </form>
+    <p class="status" id="adminStatus" role="status"></p>
+
+    <div id="adminData" hidden style="display:grid;gap:18px">
+      <div class="stats" id="stats"></div>
+
+      <div>
+        <h3 style="margin-bottom:10px">Souhrn pro výrobu</h3>
+        <div class="table-scroll"><table class="sum" id="sumTable"></table></div>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn small" id="refreshBtn">Obnovit</button>
+        <button type="button" class="btn small" id="copyBtn">Kopírovat seznam</button>
+        <button type="button" class="btn small" id="csvBtn">Stáhnout pro Excel (CSV)</button>
+        <span class="status" id="copyStatus"></span>
+      </div>
+      <textarea class="export" id="exportText" readonly hidden aria-label="Seznam objednávek jako text"></textarea>
+
+      <div>
+        <h3 style="margin-bottom:10px">Jednotlivé objednávky</h3>
+        <div class="orders" id="orders"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span>© GotYourPrint</span>
+    <button type="button" class="btn link" id="adminOpen">Správa objednávek</button>
+  </footer>
+</div>
+
+<dialog id="zoom"><img alt=""><button type="button" class="btn small" id="zoomClose">Zavřít</button></dialog>
+
+<script>
+/* ============================================================
+   NASTAVENÍ – upravte podle potřeby
+   ============================================================ */
+const CONFIG = {
+  // URL webové aplikace z Google Apps Script (viz NAVOD.md).
+  // Prázdné = ukázkový režim (objednávky jen v prohlížeči).
+  scriptUrl: "",
+  demoPassword: "tricka",       // heslo do správy jen pro ukázkový režim
+
+  title: "Combat Life Saver",
+  specs: ["Klasický střih", "100% bavlna", "180 g/m²"],
+  deadline: "",                 // např. "Objednávky přijímáme do 15. 10. 2026"
+  price: 0,                     // cena za kus v Kč (0 = nezobrazovat)
+
+  variants: [
+    { id: "cerna", name: "Černá", print: "bílý potisk", color: "#161616", img: "img/cerna.jpg" },
+    { id: "oliva", name: "Oliva", print: "černý potisk", color: "#6b7042", img: "img/oliva.jpg" },
+  ],
+  sizes: [
+    { id: "S",   a: 47, b: 70, c: 19.5 },
+    { id: "M",   a: 51, b: 72, c: 20.5 },
+    { id: "L",   a: 55, b: 74, c: 21.5 },
+    { id: "XL",  a: 59, b: 76, c: 22.5 },
+    { id: "2XL", a: 64, b: 78, c: 23.5 },
+  ],
+};
+
+/* ============================================================ */
+
+const $ = (id) => document.getElementById(id);
+const STORE_KEY = "gyp-order-" + CONFIG.title;
+const DEMO_KEY = "gyp-demo-orders-" + CONFIG.title;
+const itemKey = (v, s) => `${v.name} ${s.id}`;          // např. "Černá M"
+const cz = (n) => n.toLocaleString("cs-CZ");
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const fmtDate = (iso) => { const d = new Date(iso); return isNaN(d) ? "" : d.toLocaleString("cs-CZ", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }); };
+const plural = (n, one, few, many) => (n === 1 ? one : n >= 2 && n <= 4 ? few : many);
+const newId = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
+
+function storageGet(key, fallback) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; }
+}
+function storageSet(key, value) {
+  try { value == null ? localStorage.removeItem(key) : localStorage.setItem(key, JSON.stringify(value)); } catch { /* bez úložiště */ }
+}
+
+/* ---------- Úložiště: Google Apps Script, nebo ukázka v prohlížeči ---------- */
+
+const api = CONFIG.scriptUrl ? {
+  async call(body) {
+    const res = await fetch(CONFIG.scriptUrl, { method: "POST", body: JSON.stringify(body) }); // text/plain = bez CORS preflight
+    if (!res.ok) throw new Error("http_" + res.status);
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || "unknown");
+    return data;
+  },
+  save(order) { return this.call({ action: "save", order }); },
+  cancel(id) { return this.call({ action: "cancel", id }); },
+  list(password) { return this.call({ action: "list", password }).then((d) => d.orders); },
+  remove(password, id) { return this.call({ action: "delete", password, id }).then((d) => d.orders); },
+} : {
+  all() { return storageGet(DEMO_KEY, []); },
+  async save(order) {
+    const all = this.all();
+    const now = new Date().toISOString();
+    const i = all.findIndex((o) => o.id === order.id);
+    const row = { ...order, created: i >= 0 ? all[i].created : now, updated: now };
+    i >= 0 ? (all[i] = row) : all.push(row);
+    storageSet(DEMO_KEY, all);
+    return { ok: true, updated: now };
+  },
+  async cancel(id) { storageSet(DEMO_KEY, this.all().filter((o) => o.id !== id)); return { ok: true }; },
+  async list(password) {
+    if (password !== CONFIG.demoPassword) throw new Error("bad_password");
+    return this.all();
+  },
+  async remove(password, id) { await this.cancel(id); return this.list(password); },
+};
+
+/* ---------- Stav zákazníka (pamatuje si volby) ---------- */
+
+const saved = storageGet(STORE_KEY, null);
+const state = {
+  id: saved?.id || null,
+  submitted: saved?.submitted || null,
+  items: { ...(saved?.items || {}) },
+};
+
+function persistDraft() {
+  storageSet(STORE_KEY, {
+    id: state.id,
+    submitted: state.submitted,
+    items: state.items,
+    name: $("fName").value,
+    contact: $("fContact").value,
+    note: $("fNote").value,
+  });
+}
+
+/* ---------- Vykreslení nabídky ---------- */
+
+function buildShop() {
+  $("title").textContent = CONFIG.title;
+  $("specs").innerHTML = `<span class="chip fit">FIT</span>` + CONFIG.specs.map((s) => `<span class="chip">${esc(s)}</span>`).join("");
+  if (CONFIG.deadline) { $("deadline").textContent = CONFIG.deadline; $("deadline").hidden = false; }
+  if (!CONFIG.scriptUrl) { $("demoPass").textContent = CONFIG.demoPassword; $("demoBanner").hidden = false; }
+
+  $("variants").innerHTML = CONFIG.variants.map((v) => `
+    <article class="variant" data-variant="${v.id}">
+      <figure data-zoom="${esc(v.img)}"><img src="${esc(v.img)}" alt="Tričko ${esc(v.name)} (${esc(v.print)}) – přední a zadní strana" loading="lazy"></figure>
+      <div class="variant-body">
+        <h3 class="variant-title"><span class="swatch" style="background:${v.color}"></span>${esc(v.name)}<small>${esc(v.print)}</small></h3>
+        <div class="sizes">
+          ${CONFIG.sizes.map((s) => `
+            <div class="size" data-key="${esc(itemKey(v, s))}">
+              <button type="button" class="size-label" data-add aria-label="${esc(v.name)} ${s.id}: přidat kus">${s.id}</button>
+              <div class="stepper">
+                <button type="button" data-minus aria-label="${esc(v.name)} ${s.id}: ubrat">−</button>
+                <output>0</output>
+                <button type="button" data-plus aria-label="${esc(v.name)} ${s.id}: přidat">+</button>
+              </div>
+            </div>`).join("")}
+        </div>
+      </div>
+    </article>`).join("");
+
+  $("variants").addEventListener("click", (e) => {
+    const fig = e.target.closest("[data-zoom]");
+    if (fig) return openZoom(fig.dataset.zoom);
+    const cell = e.target.closest(".size");
+    if (!cell) return;
+    const key = cell.dataset.key;
+    const q = state.items[key] || 0;
+    if (e.target.closest("[data-plus]") || e.target.closest("[data-add]")) setQty(key, q + 1);
+    else if (e.target.closest("[data-minus]")) setQty(key, q - 1);
+  });
+
+  const cols = CONFIG.sizes.map((s) => `<th scope="col">${s.id}</th>`).join("");
+  const row = (label, name, f) => `<tr><th scope="row"><span>${label}</span>${name}</th>${CONFIG.sizes.map((s) => `<td>${String(f(s)).replace(".", ",")}</td>`).join("")}</tr>`;
+  $("sizeTable").innerHTML = `<thead><tr><th scope="col">Velikost</th>${cols}</tr></thead><tbody>
+    ${row("A", "Šířka", (s) => s.a)}${row("B", "Délka", (s) => s.b)}${row("C", "Rukáv", (s) => s.c)}</tbody>`;
+}
+
+function setQty(key, q) {
+  q = Math.max(0, Math.min(99, q));
+  if (q) state.items[key] = q; else delete state.items[key];
+  renderItems();
+  persistDraft();
+}
+
+function totalPieces(items) { return Object.values(items).reduce((a, b) => a + b, 0); }
+
+function renderItems() {
+  document.querySelectorAll(".size").forEach((cell) => {
+    const q = state.items[cell.dataset.key] || 0;
+    cell.querySelector("output").textContent = q;
+    cell.classList.toggle("on", q > 0);
+  });
+  document.querySelectorAll(".variant").forEach((el) => {
+    const v = CONFIG.variants.find((x) => x.id === el.dataset.variant);
+    el.classList.toggle("has-items", CONFIG.sizes.some((s) => state.items[itemKey(v, s)]));
+  });
+
+  const entries = orderedEntries(state.items);
+  const total = totalPieces(state.items);
+  $("recap").innerHTML = entries.length
+    ? entries.map(([k, q]) => `<div class="recap-row"><span>${esc(k)}</span><span>${q} ks</span></div>`).join("") +
+      `<div class="recap-row recap-total"><span>Celkem</span><span>${total} ks${CONFIG.price ? ` · ${cz(total * CONFIG.price)} Kč` : ""}</span></div>`
+    : `<span class="recap-empty">Zatím nemáte vybrané žádné tričko. Nahoře klikněte na velikost.</span>`;
+}
+
+// položky v pořadí barev a velikostí z nastavení
+function orderedEntries(items) {
+  const out = [];
+  CONFIG.variants.forEach((v) => CONFIG.sizes.forEach((s) => {
+    const k = itemKey(v, s);
+    if (items[k]) out.push([k, items[k]]);
+  }));
+  Object.keys(items).forEach((k) => { if (!out.some(([x]) => x === k)) out.push([k, items[k]]); });
+  return out;
+}
+
+/* ---------- Odeslání objednávky ---------- */
+
+function setStatus(el, text, kind) { el.textContent = text; el.className = "status" + (kind ? " " + kind : ""); }
+
+function renderSavedInfo() {
+  $("savedInfo").textContent = state.submitted ? `Uloženo ${fmtDate(state.submitted)} – můžete ji kdykoli upravit.` : "";
+  $("submitBtn").textContent = state.submitted ? "Uložit změny" : "Odeslat objednávku";
+  $("cancelOrderBtn").hidden = !state.submitted;
+}
+
+$("orderForm").addEventListener("input", persistDraft);
+
+$("orderForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const status = $("formStatus");
+  const name = $("fName").value.trim();
+  const contact = $("fContact").value.trim();
+  if (!totalPieces(state.items)) return setStatus(status, "Vyberte prosím alespoň jedno tričko (klikněte na velikost).", "err");
+  if (!name) { $("fName").focus(); return setStatus(status, "Vyplňte prosím jméno a příjmení.", "err"); }
+  if (!contact) { $("fContact").focus(); return setStatus(status, "Vyplňte prosím telefon nebo e-mail.", "err"); }
+
+  const btn = $("submitBtn");
+  btn.disabled = true;
+  setStatus(status, "Ukládám…");
+  if (!state.id) state.id = newId();
+  try {
+    const res = await api.save({ id: state.id, name, contact, note: $("fNote").value.trim(), items: state.items });
+    state.submitted = res.updated || new Date().toISOString();
+    persistDraft();
+    renderSavedInfo();
+    setStatus(status, `Hotovo! Objednávka (${totalPieces(state.items)} ks) je uložená. Děkujeme.`, "ok");
+  } catch (err) {
+    setStatus(status, "Objednávku se nepodařilo uložit. Zkontrolujte připojení k internetu a zkuste to znovu.", "err");
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+$("cancelOrderBtn").addEventListener("click", () => { $("cancelConfirm").hidden = false; $("cancelOrderBtn").hidden = true; });
+$("cancelNo").addEventListener("click", () => { $("cancelConfirm").hidden = true; $("cancelOrderBtn").hidden = false; });
+$("cancelYes").addEventListener("click", async () => {
+  $("cancelConfirm").hidden = true;
+  try {
+    await api.cancel(state.id);
+    state.id = null;
+    state.submitted = null;
+    state.items = {};
+    renderItems();
+    persistDraft();
+    renderSavedInfo();
+    setStatus($("formStatus"), "Objednávka byla zrušena.", "ok");
+  } catch {
+    $("cancelOrderBtn").hidden = false;
+    setStatus($("formStatus"), "Zrušení se nepodařilo, zkuste to prosím znovu.", "err");
+  }
+});
+
+/* ---------- Náhled obrázku ---------- */
+
+function openZoom(src) {
+  const d = $("zoom");
+  d.querySelector("img").src = src;
+  d.showModal();
+}
+$("zoomClose").addEventListener("click", () => $("zoom").close());
+$("zoom").addEventListener("click", (e) => { if (e.target === $("zoom")) $("zoom").close(); });
+
+/* ============================================================
+   SPRÁVA OBJEDNÁVEK
+   ============================================================ */
+
+let adminPass = null;
+let adminOrders = [];
+
+function showAdmin(on) {
+  $("admin").hidden = !on;
+  $("shop").hidden = on;
+  $("adminOpen").hidden = on;
+  if (on) {
+    try { adminPass = sessionStorage.getItem("gyp-admin") || null; } catch { adminPass = null; }
+    if (adminPass) loadOrders(); else $("adminPass").focus();
+  }
+  window.scrollTo(0, 0);
+}
+$("adminOpen").addEventListener("click", () => { history.replaceState(null, "", "#sprava"); showAdmin(true); });
+$("adminClose").addEventListener("click", () => { history.replaceState(null, "", location.pathname + location.search); showAdmin(false); });
+
+$("adminLogin").addEventListener("submit", (e) => {
+  e.preventDefault();
+  adminPass = $("adminPass").value;
+  loadOrders();
+});
+
+async function loadOrders() {
+  const status = $("adminStatus");
+  setStatus(status, "Načítám objednávky…");
+  try {
+    adminOrders = await api.list(adminPass);
+    try { sessionStorage.setItem("gyp-admin", adminPass); } catch { /* nic */ }
+    $("adminLogin").hidden = true;
+    setStatus(status, "");
+    renderAdmin();
+  } catch (err) {
+    adminPass = null;
+    try { sessionStorage.removeItem("gyp-admin"); } catch { /* nic */ }
+    $("adminLogin").hidden = false;
+    $("adminData").hidden = true;
+    setStatus(status, err.message === "bad_password" ? "Nesprávné heslo." : "Objednávky se nepodařilo načíst. Zkuste to znovu.", "err");
+  }
+}
+$("refreshBtn").addEventListener("click", loadOrders);
+
+function sumTotals(orders) {
+  const t = {};
+  orders.forEach((o) => Object.entries(o.items || {}).forEach(([k, q]) => { t[k] = (t[k] || 0) + Number(q); }));
+  return t;
+}
+
+function renderAdmin() {
+  $("adminData").hidden = false;
+  const orders = [...adminOrders].sort((a, b) => String(a.created).localeCompare(String(b.created)));
+  const totals = sumTotals(orders);
+  const pieces = totalPieces(totals);
+
+  $("stats").innerHTML = [
+    [orders.length, plural(orders.length, "objednávka", "objednávky", "objednávek")],
+    [pieces, plural(pieces, "tričko celkem", "trička celkem", "triček celkem")],
+    ...CONFIG.variants.map((v) => [CONFIG.sizes.reduce((a, s) => a + (totals[itemKey(v, s)] || 0), 0), v.name.toLowerCase()]),
+    ...(CONFIG.price ? [[cz(pieces * CONFIG.price) + " Kč", "k vybrání"]] : []),
+  ].map(([n, l]) => `<div class="stat"><b>${n}</b><span>${esc(l)}</span></div>`).join("");
+
+  const head = `<thead><tr><th scope="col">Barva</th>${CONFIG.sizes.map((s) => `<th scope="col">${s.id}</th>`).join("")}<th scope="col">Celkem</th></tr></thead>`;
+  const body = CONFIG.variants.map((v) => {
+    const cells = CONFIG.sizes.map((s) => totals[itemKey(v, s)] || 0);
+    return `<tr><th scope="row">${esc(v.name)}</th>${cells.map((c) => `<td class="${c ? "" : "zero"}">${c}</td>`).join("")}<td class="total">${cells.reduce((a, b) => a + b, 0)}</td></tr>`;
+  }).join("");
+  const foot = `<tfoot><tr><th scope="row">Celkem</th>${CONFIG.sizes.map((s) => `<td>${CONFIG.variants.reduce((a, v) => a + (totals[itemKey(v, s)] || 0), 0)}</td>`).join("")}<td>${pieces}</td></tr></tfoot>`;
+  $("sumTable").innerHTML = head + `<tbody>${body}</tbody>` + foot;
+
+  $("orders").innerHTML = orders.length ? orders.map((o, i) => `
+    <div class="order" data-id="${esc(o.id)}">
+      <div class="order-head">
+        <b>${i + 1}. ${esc(o.name)}</b>
+        <span>${esc(o.contact)}</span>
+        <span>${fmtDate(o.updated || o.created)}</span>
+        <span class="del">
+          <button type="button" class="btn link" data-del>Smazat</button>
+          <span class="confirm" hidden>Smazat objednávku?
+            <button type="button" class="btn small" data-del-yes>Ano</button>
+            <button type="button" class="btn small" data-del-no>Ne</button>
+          </span>
+        </span>
+      </div>
+      <div class="order-items">${orderedEntries(o.items || {}).map(([k, q]) => `${esc(k)} × ${q}`).join(", ")}</div>
+      ${o.note ? `<div class="order-note">${esc(o.note)}</div>` : ""}
+    </div>`).join("") : `<p class="note">Zatím žádné objednávky.</p>`;
+
+  $("exportText").value = exportText(orders, totals);
+}
+
+$("orders").addEventListener("click", async (e) => {
+  const order = e.target.closest(".order");
+  if (!order) return;
+  const confirmEl = order.querySelector(".confirm");
+  const delBtn = order.querySelector("[data-del]");
+  if (e.target.closest("[data-del]")) { confirmEl.hidden = false; delBtn.hidden = true; }
+  if (e.target.closest("[data-del-no]")) { confirmEl.hidden = true; delBtn.hidden = false; }
+  if (e.target.closest("[data-del-yes]")) {
+    try {
+      adminOrders = await api.remove(adminPass, order.dataset.id);
+      renderAdmin();
+    } catch {
+      setStatus($("adminStatus"), "Smazání se nepodařilo.", "err");
+    }
+  }
+});
+
+function exportText(orders, totals) {
+  const lines = [`${CONFIG.title.toUpperCase()} – SOUHRN (${new Date().toLocaleDateString("cs-CZ")})`, ""];
+  CONFIG.variants.forEach((v) => {
+    const parts = CONFIG.sizes.map((s) => `${s.id}: ${totals[itemKey(v, s)] || 0}`);
+    const sum = CONFIG.sizes.reduce((a, s) => a + (totals[itemKey(v, s)] || 0), 0);
+    lines.push(`${v.name} (${v.print}) – ${parts.join(", ")} → celkem ${sum} ks`);
+  });
+  lines.push(`Celkem: ${totalPieces(totals)} ks, ${orders.length} ${plural(orders.length, "objednávka", "objednávky", "objednávek")}`, "", "OBJEDNÁVKY");
+  orders.forEach((o, i) => {
+    const items = orderedEntries(o.items || {}).map(([k, q]) => `${k} ×${q}`).join(", ");
+    lines.push(`${i + 1}. ${o.name} (${o.contact}) – ${items}${o.note ? ` – ${o.note}` : ""}`);
+  });
+  return lines.join("\n");
+}
+
+$("copyBtn").addEventListener("click", async () => {
+  const text = $("exportText").value;
+  try {
+    await navigator.clipboard.writeText(text);
+    setStatus($("copyStatus"), "Zkopírováno.", "ok");
+  } catch {
+    const ta = $("exportText");
+    ta.hidden = false;
+    ta.focus();
+    ta.select();
+    setStatus($("copyStatus"), "Seznam je označený níže – zkopírujte ho (Ctrl+C).", "");
+  }
+});
+
+$("csvBtn").addEventListener("click", () => {
+  const orders = [...adminOrders].sort((a, b) => String(a.created).localeCompare(String(b.created)));
+  const keys = CONFIG.variants.flatMap((v) => CONFIG.sizes.map((s) => itemKey(v, s)));
+  const cell = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const rows = [["Jméno", "Kontakt", "Poznámka", "Datum", ...keys, "Celkem"].map(cell).join(";")];
+  orders.forEach((o) => rows.push([o.name, o.contact, o.note, fmtDate(o.updated || o.created),
+    ...keys.map((k) => o.items?.[k] || 0), totalPieces(o.items || {})].map(cell).join(";")));
+  const totals = sumTotals(orders);
+  rows.push(["CELKEM", "", "", "", ...keys.map((k) => totals[k] || 0), totalPieces(totals)].map(cell).join(";"));
+  const blob = new Blob(["﻿" + rows.join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `objednavky-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+});
+
+/* ---------- Start ---------- */
+
+buildShop();
+// V náhledu na claude.ai nejde stahovat soubory – tlačítko CSV tam skryjeme.
+if (window.claude) $("csvBtn").hidden = true;
+if (saved) {
+  $("fName").value = saved.name || "";
+  $("fContact").value = saved.contact || "";
+  $("fNote").value = saved.note || "";
+}
+renderItems();
+renderSavedInfo();
+if (location.hash === "#sprava") showAdmin(true);
+</script>
+</body>
+</html>
