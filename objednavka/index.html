@@ -103,6 +103,7 @@
     font: 400 1rem var(--body); color: var(--text); background: var(--panel-2);
     border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; width: 100%;
   }
+  input[aria-invalid="true"] { border-color: var(--err); background: #2a1715; }
   input:focus, textarea:focus, button:focus-visible, .size-label:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   .recap { background: var(--panel-2); border-radius: 10px; padding: 12px 14px; display: grid; gap: 4px; }
   .recap-empty { color: var(--muted); }
@@ -204,8 +205,11 @@
       <form id="orderForm" novalidate>
         <div class="recap" id="recap"></div>
         <div class="fields">
-          <label for="fName">Jméno a příjmení *
-            <input id="fName" name="name" required maxlength="100" autocomplete="name">
+          <label for="fFirst">Jméno *
+            <input id="fFirst" name="firstName" required maxlength="50" autocomplete="given-name">
+          </label>
+          <label for="fLast">Příjmení *
+            <input id="fLast" name="lastName" required maxlength="50" autocomplete="family-name">
           </label>
           <label for="fContact">Telefon nebo e-mail *
             <input id="fContact" name="contact" required maxlength="150" autocomplete="tel">
@@ -401,7 +405,8 @@ function persistDraft() {
     submitted: state.submitted,
     items: state.items,
     cut: state.cut,
-    name: $("fName").value,
+    first: $("fFirst").value,
+    last: $("fLast").value,
     contact: $("fContact").value,
     note: $("fNote").value,
   });
@@ -527,16 +532,29 @@ function renderSavedInfo() {
   $("cancelOrderBtn").hidden = !state.submitted;
 }
 
-$("orderForm").addEventListener("input", persistDraft);
+$("orderForm").addEventListener("input", (e) => {
+  if (e.target.value.trim()) e.target.removeAttribute("aria-invalid");
+  persistDraft();
+});
 
 $("orderForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const status = $("formStatus");
-  const name = $("fName").value.trim();
+  const first = $("fFirst").value.trim();
+  const last = $("fLast").value.trim();
+  const name = `${first} ${last}`;
   const contact = $("fContact").value.trim();
   if (!totalPieces(state.items)) return setStatus(status, "Vyberte prosím alespoň jedno tričko (klikněte na velikost).", "err");
-  if (!name) { $("fName").focus(); return setStatus(status, "Vyplňte prosím jméno a příjmení.", "err"); }
-  if (!contact) { $("fContact").focus(); return setStatus(status, "Vyplňte prosím telefon nebo e-mail.", "err"); }
+
+  // povinná pole – chybějící zvýrazníme a přejdeme na první z nich
+  const missing = [["fFirst", first, "jméno"], ["fLast", last, "příjmení"], ["fContact", contact, "telefon nebo e-mail"]]
+    .filter(([id, value]) => { $(id).setAttribute("aria-invalid", String(!value)); return !value; });
+  if (missing.length) {
+    $(missing[0][0]).focus();
+    const names = missing.map((m) => m[2]);
+    const list = names.length > 1 ? names.slice(0, -1).join(", ") + " a " + names[names.length - 1] : names[0];
+    return setStatus(status, `Vyplňte prosím ${list}.`, "err");
+  }
 
   const btn = $("submitBtn");
   btn.disabled = true;
@@ -758,7 +776,8 @@ buildShop();
 // V náhledu na claude.ai nejde stahovat soubory – tlačítko CSV tam skryjeme.
 if (window.claude) $("csvBtn").hidden = true;
 if (saved) {
-  $("fName").value = saved.name || "";
+  $("fFirst").value = saved.first || "";
+  $("fLast").value = saved.last || "";
   $("fContact").value = saved.contact || "";
   $("fNote").value = saved.note || "";
 }
