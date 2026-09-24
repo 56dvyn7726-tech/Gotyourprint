@@ -73,6 +73,19 @@
   .cut[aria-selected="true"] .cut-name { color: var(--gold); }
   .cut-count { margin-left: auto; font: 700 0.8rem var(--body); color: var(--gold-ink); background: var(--gold); border-radius: 999px; padding: 2px 9px; }
   .cut-specs { color: var(--muted); font-size: 0.85rem; }
+  .cut-infos { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr)); gap: 16px; }
+  .cut-info { background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 12px; align-content: start; }
+  .cut-info.current { border-color: var(--gold); }
+  .cut-info-head { display: flex; gap: 14px; align-items: flex-start; }
+  .cut-info-head figure { margin: 0; flex: none; width: 92px; cursor: zoom-in; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); }
+  .cut-info-head figure img { display: block; width: 100%; height: auto; }
+  .cut-info-head h3 { font-size: 2rem; color: var(--gold); margin-bottom: 6px; }
+  .cut-info-head ul { margin: 0; padding: 0; list-style: none; color: var(--text); font-size: 0.92rem; display: grid; gap: 2px; }
+  .cut-info-head ul li::before { content: "▸ "; color: var(--gold); }
+  .cut-info .links { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.85rem; }
+  .cut-info .links button { background: none; border: 0; padding: 0; color: var(--gold); font: 600 0.85rem var(--body); cursor: pointer; text-decoration: underline; }
+  .cut-info table th, .cut-info table td { padding: 6px 6px; }
+  .cut-info thead th { font-size: 1.1rem; }
   .sum .cut-row th { text-align: left; font-family: var(--display); font-weight: 400; font-size: 1.2rem; color: var(--gold); letter-spacing: 0.04em; background: var(--panel-2); }
   .sum td.na { color: #3d3c38; }
   .size { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); display: grid; justify-items: center; gap: 4px; padding: 8px 2px 6px; transition: border-color .15s, background .15s; }
@@ -156,6 +169,13 @@
     .size-label { font-size: 1.3rem; }
     .stepper button { width: 24px; height: 24px; }
   }
+  .lbl { font-style: normal; }
+  @media (max-width: 520px) {
+    .cut-info .lbl { display: none; }
+    .cut-info table th, .cut-info table td { padding: 6px 3px; font-size: 0.9rem; }
+    .cut-info thead th { font-size: 1rem; }
+    .cut-info { padding: 10px; }
+  }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
@@ -185,16 +205,12 @@
 
     <section class="panel" aria-labelledby="sizeTitle">
       <div class="panel-head">
-        <h2 id="sizeTitle">Tabulka velikostí – <span id="sizeCut"></span></h2>
+        <h2 id="sizeTitle">Tabulka velikostí a info o tričkách</h2>
         <p>Rozměry v cm</p>
       </div>
-      <div class="table-scroll"><table id="sizeTable"></table></div>
+      <div class="cut-infos" id="cutInfos"></div>
       <p class="note">A = polovina obvodu hrudníku (šířka trička v podpaží), B = délka od ramene, C = délka rukávu.
         Tip: změřte si tričko, které vám dobře sedí, a porovnejte.</p>
-      <details>
-        <summary>Zobrazit nákres měření</summary>
-        <img id="chartImg" src="" alt="Nákres trička s vyznačenými rozměry A, B a C" loading="lazy">
-      </details>
     </section>
 
     <section class="panel" aria-labelledby="formTitle">
@@ -301,6 +317,7 @@ const CONFIG = {
     {
       id: "fit", name: "FIT",
       specs: ["Klasický střih", "100% bavlna", "180 g/m²"],
+      info: "img/info-fit.jpg",
       chart: "img/tabulka-fit.jpg",
       sizes: [
         { id: "S",   a: 47, b: 70, c: 19.5 },
@@ -312,7 +329,8 @@ const CONFIG = {
     },
     {
       id: "everyday", name: "EVERYDAY",
-      specs: [],
+      specs: ["Klasický střih", "100% bavlna", "180 g/m²"],
+      info: "img/info-everyday.jpg",
       chart: "img/tabulka-everyday.jpg",
       sizes: [
         { id: "XS",  a: 45.5, b: 71.5, c: 20 },
@@ -442,6 +460,34 @@ function buildShop() {
     if (e.target.closest("[data-plus]") || e.target.closest("[data-add]")) setQty(key, q + 1);
     else if (e.target.closest("[data-minus]")) setQty(key, q - 1);
   });
+
+  // info o střizích a tabulky velikostí – vždy všechny najednou
+  $("cutInfos").innerHTML = CONFIG.cuts.map((c) => {
+    const cols = c.sizes.map((s) => `<th scope="col">${s.id}</th>`).join("");
+    const row = (label, name, f) => `<tr><th scope="row"><span>${label}</span><em class="lbl">${name}</em></th>${c.sizes.map((s) => `<td>${String(f(s)).replace(".", ",")}</td>`).join("")}</tr>`;
+    return `
+      <article class="cut-info" data-cut="${c.id}">
+        <div class="cut-info-head">
+          ${c.info ? `<figure data-zoom="${esc(c.info)}"><img src="${esc(c.info)}" alt="Tričko ${esc(c.name)} – produktový list" loading="lazy"></figure>` : ""}
+          <div>
+            <h3>${esc(c.name)}</h3>
+            <ul>${c.specs.map((x) => `<li>${esc(x)}</li>`).join("")}<li>velikosti ${c.sizes[0].id}–${c.sizes[c.sizes.length - 1].id}</li></ul>
+          </div>
+        </div>
+        <div class="table-scroll"><table aria-label="Tabulka velikostí ${esc(c.name)}">
+          <thead><tr><th scope="col">Vel.</th>${cols}</tr></thead>
+          <tbody>${row("A", "Šířka", (s) => s.a)}${row("B", "Délka", (s) => s.b)}${row("C", "Rukáv", (s) => s.c)}</tbody>
+        </table></div>
+        <div class="links">
+          ${c.chart ? `<button type="button" data-zoom="${esc(c.chart)}">Nákres měření</button>` : ""}
+          ${c.info ? `<button type="button" data-zoom="${esc(c.info)}">Produktový list</button>` : ""}
+        </div>
+      </article>`;
+  }).join("");
+  $("cutInfos").addEventListener("click", (e) => {
+    const z = e.target.closest("[data-zoom]");
+    if (z) openZoom(z.dataset.zoom);
+  });
   renderCut();
 }
 
@@ -469,12 +515,7 @@ function renderCut() {
       </div>
     </article>`).join("");
 
-  $("sizeCut").textContent = c.name;
-  $("chartImg").src = c.chart;
-  const cols = c.sizes.map((s) => `<th scope="col">${s.id}</th>`).join("");
-  const row = (label, name, f) => `<tr><th scope="row"><span>${label}</span>${name}</th>${c.sizes.map((s) => `<td>${String(f(s)).replace(".", ",")}</td>`).join("")}</tr>`;
-  $("sizeTable").innerHTML = `<thead><tr><th scope="col">Velikost</th>${cols}</tr></thead><tbody>
-    ${row("A", "Šířka", (s) => s.a)}${row("B", "Délka", (s) => s.b)}${row("C", "Rukáv", (s) => s.c)}</tbody>`;
+  document.querySelectorAll(".cut-info").forEach((el) => el.classList.toggle("current", el.dataset.cut === c.id));
   renderItems();
 }
 
