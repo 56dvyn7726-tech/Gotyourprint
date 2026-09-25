@@ -26,7 +26,7 @@ const HEADER = ['ID', 'Vytvořeno', 'Upraveno', 'Jméno', 'Telefon', 'E-mail', '
 const COL_DATA = HEADER.length; // poslední sloupec s položkami ve formátu JSON
 
 function doGet() {
-  return out({ ok: true, message: 'Objednávky GotYourPrint běží.' });
+  return out({ ok: true, message: 'Objednávky běží.' });
 }
 
 function doPost(e) {
