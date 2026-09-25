@@ -7,7 +7,7 @@
 const ADMIN_PASSWORD = 'ZMENTE-TOTO-HESLO';
 
 // ---- Platba převodem ----
-const BANK_ACCOUNT = '';                     // číslo účtu, např. '123456789/0100' nebo '19-123456789/0800' (prázdné = platbu nezobrazovat)
+const BANK_ACCOUNT = '';                     // číslo účtu, např. '123456789/0100', '19-123456789/0800' nebo IBAN 'CZ65 0800 …' (prázdné = platbu nezobrazovat)
 const PAYMENT_MESSAGE = 'CLS tricko';        // zpráva pro příjemce, doplní se jméno zákazníka
 const VS_START = 1001;                       // první variabilní symbol, další objednávky dostanou 1002, 1003…
 const PAYMENT_DAYS = 7;                      // do kolika dní zaplatit (0 = neuvádět)
@@ -31,8 +31,21 @@ const HEADER = ['ID', 'VS', 'Vytvořeno', 'Upraveno', 'Jméno', 'Telefon', 'E-ma
 // pořadí sloupců (od 0)
 const COL = { id: 0, vs: 1, created: 2, updated: 3, name: 4, phone: 5, email: 6, note: 7, itemsText: 8, count: 9, price: 10, paid: 11, data: 12 };
 
+const SCRIPT_VERSION = 3;
+
+// Otevřete adresu skriptu v prohlížeči: ukáže, jestli je vše nastavené.
 function doGet() {
-  return out({ ok: true, message: 'Objednávky běží.' });
+  const iban = czIban(BANK_ACCOUNT);
+  return out({
+    ok: true,
+    message: 'Objednávky běží.',
+    verze: SCRIPT_VERSION,
+    platba: !BANK_ACCOUNT ? 'VYPNUTÁ – ve skriptu není vyplněný BANK_ACCOUNT'
+      : iban ? 'OK – účet ' + BANK_ACCOUNT + ' (IBAN ' + iban + ')'
+      : 'CHYBA – číslo účtu "' + BANK_ACCOUNT + '" má špatný tvar, správně např. 123456789/0100',
+    emaily: SEND_CONFIRMATION ? 'zapnuté' : 'vypnuté',
+    heslo: ADMIN_PASSWORD === 'ZMENTE-TOTO-HESLO' ? 'POZOR – heslo do správy není změněné' : 'nastavené',
+  });
 }
 
 function doPost(e) {
@@ -232,7 +245,9 @@ function listOrders() {
 
 // "19-123456789/0800" -> "CZ.." (IBAN)
 function czIban(account) {
-  const m = String(account).replace(/\s/g, '').match(/^(?:(\d{1,6})-)?(\d{2,10})\/(\d{4})$/);
+  const clean = String(account).replace(/\s/g, '').toUpperCase();
+  if (/^CZ\d{22}$/.test(clean)) return clean; // už je to IBAN
+  const m = clean.match(/^(?:(\d{1,6})-)?(\d{2,10})\/(\d{4})$/);
   if (!m) return '';
   const bban = m[3] + ('000000' + (m[1] || '')).slice(-6) + ('0000000000' + m[2]).slice(-10);
   const digits = bban + '123500'; // C=12, Z=35, 00
