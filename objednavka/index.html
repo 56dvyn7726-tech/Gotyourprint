@@ -156,6 +156,25 @@
   .order-head span { color: var(--muted); font-size: 0.85rem; }
   .order-head .del { margin-left: auto; }
   .order-price { color: var(--text) !important; font-weight: 700; }
+  .pay { border: 2px solid var(--gold); border-radius: 12px; padding: 16px; display: flex; flex-wrap: wrap; gap: 16px 24px; align-items: flex-start; }
+  .pay-info { flex: 1 1 260px; display: grid; gap: 10px; }
+  .pay-info h3 { color: var(--gold); font-size: 1.7rem; }
+  .pay dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; align-items: baseline; }
+  .pay dt { color: var(--muted); font-size: 0.9rem; }
+  .pay dd { margin: 0; font-weight: 700; font-size: 1.1rem; font-variant-numeric: tabular-nums; overflow-wrap: break-word; }
+  .copy { background: none; border: 1px solid var(--line); border-radius: 6px; color: var(--gold); font: 600 0.75rem var(--body); padding: 2px 8px; margin-left: 6px; cursor: pointer; vertical-align: middle; }
+  .pay-qr { margin: 0; display: grid; justify-items: center; gap: 6px; }
+  .pay-qr canvas { width: 180px; height: 180px; background: #fff; border-radius: 8px; image-rendering: pixelated; }
+  .pay-qr figcaption { color: var(--muted); font-size: 0.8rem; }
+  .badge { font: 700 0.75rem var(--body) !important; border-radius: 999px; padding: 2px 10px; }
+  .badge.paid { background: #1f3a24; color: var(--ok) !important; }
+  .badge.unpaid { background: #3a2a14; color: var(--gold) !important; }
+  .order.is-paid { box-shadow: inset 3px 0 0 var(--ok); }
+  .order.is-unpaid { box-shadow: inset 3px 0 0 var(--gold); }
+  .order-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 4px; }
+  .orders-head { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .filter { display: flex; gap: 6px; flex-wrap: wrap; }
+  .filter [aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
   .order-items { color: var(--gold); font-weight: 600; }
   .order-note { color: var(--muted); font-size: 0.9rem; }
   .confirm { display: inline-flex; gap: 6px; align-items: center; font-size: 0.85rem; }
@@ -179,6 +198,8 @@
     .cut-info table th, .cut-info table td { padding: 6px 3px; font-size: 0.9rem; }
     .cut-info thead th { font-size: 1rem; }
     .cut-info { padding: 10px; }
+    .pay dl { grid-template-columns: 1fr; gap: 0; }
+    .pay dd { margin-bottom: 8px; }
   }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
@@ -251,6 +272,25 @@
         </div>
         <p class="status" id="formStatus" role="status"></p>
       </form>
+
+      <div class="pay" id="payBox" hidden>
+        <div class="pay-info">
+          <h3>Platba převodem</h3>
+          <dl>
+            <dt>Číslo účtu</dt><dd><span id="payAccount"></span> <button type="button" class="copy" data-copy="payAccount">Kopírovat</button></dd>
+            <dt>Částka</dt><dd id="payAmount"></dd>
+            <dt>Variabilní symbol</dt><dd><span id="payVs"></span> <button type="button" class="copy" data-copy="payVs">Kopírovat</button></dd>
+            <dt>Zpráva</dt><dd id="payMsg"></dd>
+          </dl>
+          <p class="note">Nezapomeňte zadat <b>variabilní symbol</b>, podle něj platbu spárujeme s vaší objednávkou.<span id="payDays"></span>
+            Po přijetí platby vám přijde e-mail. Zaplacenou objednávku už nejde měnit.</p>
+          <p class="note" id="payDemo" hidden>Ukázkový režim: číslo účtu je smyšlené, neplaťte na něj.</p>
+        </div>
+        <figure class="pay-qr">
+          <canvas id="payQr" width="220" height="220" aria-label="QR Platba"></canvas>
+          <figcaption>QR Platba – naskenujte v mobilní bance</figcaption>
+        </figure>
+      </div>
     </section>
   </main>
 
@@ -286,7 +326,14 @@
       <textarea class="export" id="exportText" readonly hidden aria-label="Seznam objednávek jako text"></textarea>
 
       <div>
-        <h3 style="margin-bottom:10px">Jednotlivé objednávky</h3>
+        <div class="orders-head">
+          <h3>Jednotlivé objednávky</h3>
+          <div class="filter" role="group" aria-label="Filtr objednávek">
+            <button type="button" class="btn small" data-filter="all" aria-pressed="true">Vše</button>
+            <button type="button" class="btn small" data-filter="unpaid" aria-pressed="false">Nezaplacené</button>
+            <button type="button" class="btn small" data-filter="paid" aria-pressed="false">Zaplacené</button>
+          </div>
+        </div>
         <div class="orders" id="orders"></div>
       </div>
     </div>
@@ -300,6 +347,7 @@
 
 <dialog id="zoom"><img alt=""><button type="button" class="btn small" id="zoomClose">Zavřít</button></dialog>
 
+<script src="qrcode.js"></script>
 <script>
 /* ============================================================
    NASTAVENÍ – upravte podle potřeby
@@ -309,6 +357,7 @@ const CONFIG = {
   // Prázdné = ukázkový režim (objednávky jen v prohlížeči).
   scriptUrl: "",
   demoPassword: "tricka",       // heslo do správy jen pro ukázkový režim
+  demoAccount: "123456789/0100", // smyšlený účet jen pro ukázkový režim (skutečný účet se nastavuje ve skriptu Google)
 
   title: "Combat Life Saver",
   deadline: "",                 // např. "Objednávky přijímáme do 15. 10. 2026"
@@ -382,6 +431,65 @@ function storageSet(key, value) {
   try { value == null ? localStorage.removeItem(key) : localStorage.setItem(key, JSON.stringify(value)); } catch { /* bez úložiště */ }
 }
 
+/* ---------- Platba (v ostrém provozu údaje posílá skript Google) ---------- */
+
+function czIban(account) {
+  const m = String(account).replace(/\s/g, "").match(/^(?:(\d{1,6})-)?(\d{2,10})\/(\d{4})$/);
+  if (!m) return "";
+  const bban = m[3] + (m[1] || "").padStart(6, "0") + m[2].padStart(10, "0");
+  let mod = 0;
+  for (const d of bban + "123500") mod = (mod * 10 + Number(d)) % 97;
+  return "CZ" + String(98 - mod).padStart(2, "0") + bban;
+}
+
+function demoPayment(vs, amount, name) {
+  const message = ("CLS tricko " + name).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9 .,-]/g, "").toUpperCase().slice(0, 60).trim();
+  const iban = czIban(CONFIG.demoAccount);
+  return { account: CONFIG.demoAccount, iban, vs: String(vs), amount, message, days: 7,
+    spd: `SPD*1.0*ACC:${iban}*AM:${amount.toFixed(2)}*CC:CZK*X-VS:${vs}*MSG:${message}` };
+}
+
+function drawQr(canvas, text) {
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  if (typeof qrcode !== "function") return;
+  const qr = qrcode(0, "M");
+  qr.addData(text);
+  qr.make();
+  const n = qr.getModuleCount();
+  const cell = Math.floor(canvas.width / (n + 8));
+  const off = Math.floor((canvas.width - cell * n) / 2);
+  ctx.fillStyle = "#000";
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (qr.isDark(r, c)) ctx.fillRect(off + c * cell, off + r * cell, cell, cell);
+}
+
+function renderPayment() {
+  const p = state.payment;
+  $("payBox").hidden = !p || !state.submitted;
+  if (!p) return;
+  $("payAccount").textContent = p.account;
+  $("payAmount").textContent = kc(p.amount);
+  $("payVs").textContent = p.vs;
+  $("payMsg").textContent = p.message;
+  $("payDays").textContent = p.days ? ` Zaplaťte prosím do ${p.days} dnů.` : "";
+  $("payDemo").hidden = !!CONFIG.scriptUrl;
+  drawQr($("payQr"), p.spd);
+}
+
+$("payBox").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-copy]");
+  if (!b) return;
+  const text = $(b.dataset.copy).textContent.replace(/\s/g, "");
+  try {
+    await navigator.clipboard.writeText(text);
+    b.textContent = "Zkopírováno";
+    setTimeout(() => { b.textContent = "Kopírovat"; }, 1500);
+  } catch {
+    getSelection().selectAllChildren($(b.dataset.copy));
+  }
+});
+
 /* ---------- Úložiště: Google Apps Script, nebo ukázka v prohlížeči ---------- */
 
 const api = CONFIG.scriptUrl ? {
@@ -396,23 +504,36 @@ const api = CONFIG.scriptUrl ? {
   cancel(id) { return this.call({ action: "cancel", id }); },
   list(password) { return this.call({ action: "list", password }).then((d) => d.orders); },
   remove(password, id) { return this.call({ action: "delete", password, id }).then((d) => d.orders); },
+  setPaid(password, id, paid) { return this.call({ action: "setPaid", password, id, paid }).then((d) => d.orders); },
 } : {
   all() { return storageGet(DEMO_KEY, []); },
   async save(order) {
     const all = this.all();
     const now = new Date().toISOString();
     const i = all.findIndex((o) => o.id === order.id);
-    const row = { ...order, created: i >= 0 ? all[i].created : now, updated: now };
+    if (i >= 0 && all[i].paid) throw new Error("paid");
+    const vs = i >= 0 ? all[i].vs : Math.max(1000, ...all.map((o) => o.vs || 0)) + 1;
+    const row = { ...order, vs, paid: "", created: i >= 0 ? all[i].created : now, updated: now };
     i >= 0 ? (all[i] = row) : all.push(row);
     storageSet(DEMO_KEY, all);
-    return { ok: true, updated: now };
+    return { ok: true, updated: now, payment: demoPayment(vs, orderPrice(order.items), order.name) };
   },
-  async cancel(id) { storageSet(DEMO_KEY, this.all().filter((o) => o.id !== id)); return { ok: true }; },
+  async cancel(id) {
+    if (this.all().some((o) => o.id === id && o.paid)) throw new Error("paid");
+    storageSet(DEMO_KEY, this.all().filter((o) => o.id !== id));
+    return { ok: true };
+  },
+  async setPaid(password, id, paid) {
+    const all = await this.list(password);
+    all.forEach((o) => { if (o.id === id) o.paid = paid ? new Date().toISOString() : ""; });
+    storageSet(DEMO_KEY, all);
+    return all;
+  },
   async list(password) {
     if (password !== CONFIG.demoPassword) throw new Error("bad_password");
     return this.all();
   },
-  async remove(password, id) { await this.cancel(id); return this.list(password); },
+  async remove(password, id) { storageSet(DEMO_KEY, this.all().filter((o) => o.id !== id)); return this.list(password); },
 };
 
 /* ---------- Stav zákazníka (pamatuje si volby) ---------- */
@@ -423,6 +544,7 @@ const state = {
   submitted: saved?.submitted || null,
   items: { ...(saved?.items || {}) },
   cut: CONFIG.cuts.some((c) => c.id === saved?.cut) ? saved.cut : CONFIG.cuts[0].id,
+  payment: saved?.payment || null,
 };
 const currentCut = () => CONFIG.cuts.find((c) => c.id === state.cut);
 
@@ -432,6 +554,7 @@ function persistDraft() {
     submitted: state.submitted,
     items: state.items,
     cut: state.cut,
+    payment: state.payment,
     first: $("fFirst").value,
     last: $("fLast").value,
     phone: $("fPhone").value,
@@ -623,13 +746,18 @@ $("orderForm").addEventListener("submit", async (e) => {
   try {
     const res = await api.save({ id: state.id, name, phone, email, note: $("fNote").value.trim(), items: state.items, price: orderPrice(state.items) });
     state.submitted = res.updated || new Date().toISOString();
+    state.payment = res.payment || null;
     persistDraft();
     renderSavedInfo();
+    renderPayment();
     const mailNote = res.emailSent ? ` Potvrzení jsme poslali na ${email}.`
       : !CONFIG.scriptUrl ? " (V ukázkovém režimu se potvrzovací e-mail neposílá.)" : "";
-    setStatus(status, `Hotovo! Objednávka (${totalPieces(state.items)} ks, ${kc(orderPrice(state.items))}) je uložená. Děkujeme.${mailNote}`, "ok");
+    const payNote = state.payment ? " Níže najdete údaje k platbě." : "";
+    setStatus(status, `Hotovo! Objednávka (${totalPieces(state.items)} ks, ${kc(orderPrice(state.items))}) je uložená. Děkujeme.${mailNote}${payNote}`, "ok");
   } catch (err) {
-    setStatus(status, "Objednávku se nepodařilo uložit. Zkontrolujte připojení k internetu a zkuste to znovu.", "err");
+    setStatus(status, err.message === "paid"
+      ? "Tato objednávka je už zaplacená, proto ji nejde změnit. Pro úpravu nás prosím kontaktujte."
+      : "Objednávku se nepodařilo uložit. Zkontrolujte připojení k internetu a zkuste to znovu.", "err");
   } finally {
     btn.disabled = false;
   }
@@ -644,13 +772,17 @@ $("cancelYes").addEventListener("click", async () => {
     state.id = null;
     state.submitted = null;
     state.items = {};
+    state.payment = null;
     renderItems();
     persistDraft();
     renderSavedInfo();
+    renderPayment();
     setStatus($("formStatus"), "Objednávka byla zrušena.", "ok");
-  } catch {
+  } catch (err) {
     $("cancelOrderBtn").hidden = false;
-    setStatus($("formStatus"), "Zrušení se nepodařilo, zkuste to prosím znovu.", "err");
+    setStatus($("formStatus"), err.message === "paid"
+      ? "Tato objednávka je už zaplacená, proto ji nejde zrušit. Kontaktujte nás prosím."
+      : "Zrušení se nepodařilo, zkuste to prosím znovu.", "err");
   }
 });
 
@@ -670,6 +802,7 @@ $("zoom").addEventListener("click", (e) => { if (e.target === $("zoom")) $("zoom
 
 let adminPass = null;
 let adminOrders = [];
+let adminFilter = "all";
 
 function showAdmin(on) {
   $("admin").hidden = !on;
@@ -728,6 +861,8 @@ function renderAdmin() {
     ...CONFIG.cuts.map((c) => [sumKeys(totals, all.filter((x) => x.c === c).map((x) => x.key)), c.name]),
     ...CONFIG.variants.map((v) => [sumKeys(totals, all.filter((x) => x.v === v).map((x) => x.key)), v.name.toLowerCase()]),
     [kc(orderPrice(totals)), "k vybrání celkem"],
+    [kc(orderPrice(sumTotals(orders.filter((o) => o.paid)))), `zaplaceno (${orders.filter((o) => o.paid).length} obj.)`],
+    [kc(orderPrice(sumTotals(orders.filter((o) => !o.paid)))), `čeká na platbu (${orders.filter((o) => !o.paid).length} obj.)`],
   ].map(([n, l]) => `<div class="stat"><b>${n}</b><span>${esc(l)}</span></div>`).join("");
 
   const sizes = allSizes();
@@ -746,10 +881,14 @@ function renderAdmin() {
   const foot = `<tfoot><tr><th scope="row">Celkem</th>${sizes.map((id) => `<td>${sumKeys(totals, all.filter((x) => x.s.id === id).map((x) => x.key))}</td>`).join("")}<td>${pieces}</td></tr></tfoot>`;
   $("sumTable").innerHTML = head + `<tbody>${body}</tbody>` + foot;
 
-  $("orders").innerHTML = orders.length ? orders.map((o, i) => `
-    <div class="order" data-id="${esc(o.id)}">
+  const shown = orders.map((o, i) => [o, i]).filter(([o]) => adminFilter === "all" || (adminFilter === "paid") === !!o.paid);
+  document.querySelectorAll("[data-filter]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.filter === adminFilter)));
+  $("orders").innerHTML = shown.length ? shown.map(([o, i]) => `
+    <div class="order ${o.paid ? "is-paid" : "is-unpaid"}" data-id="${esc(o.id)}">
       <div class="order-head">
         <b>${i + 1}. ${esc(o.name)}</b>
+        ${o.vs ? `<span>VS ${esc(o.vs)}</span>` : ""}
+        <span class="badge ${o.paid ? "paid" : "unpaid"}">${o.paid ? `Zaplaceno ${fmtDate(o.paid).split(" ").slice(0, 3).join(" ")}` : "Nezaplaceno"}</span>
         <span>${esc(o.phone || o.contact || "")}</span>
         <span>${esc(o.email || "")}</span>
         <span class="order-price">${kc(orderPrice(o.items || {}))}</span>
@@ -764,10 +903,18 @@ function renderAdmin() {
       </div>
       <div class="order-items">${orderedEntries(o.items || {}).map(([k, q]) => `${esc(k)} × ${q}`).join(", ")}</div>
       ${o.note ? `<div class="order-note">${esc(o.note)}</div>` : ""}
-    </div>`).join("") : `<p class="note">Zatím žádné objednávky.</p>`;
+      <div class="order-actions">
+        <button type="button" class="btn small" data-paid="${o.paid ? "0" : "1"}">${o.paid ? "Zrušit označení zaplaceno" : "Označit jako zaplaceno"}</button>
+      </div>
+    </div>`).join("") : `<p class="note">${orders.length ? "Žádná objednávka v tomto filtru." : "Zatím žádné objednávky."}</p>`;
 
   $("exportText").value = exportText(orders, totals);
 }
+
+document.querySelectorAll("[data-filter]").forEach((b) => b.addEventListener("click", () => {
+  adminFilter = b.dataset.filter;
+  renderAdmin();
+}));
 
 $("orders").addEventListener("click", async (e) => {
   const order = e.target.closest(".order");
@@ -776,6 +923,17 @@ $("orders").addEventListener("click", async (e) => {
   const delBtn = order.querySelector("[data-del]");
   if (e.target.closest("[data-del]")) { confirmEl.hidden = false; delBtn.hidden = true; }
   if (e.target.closest("[data-del-no]")) { confirmEl.hidden = true; delBtn.hidden = false; }
+  const paidBtn = e.target.closest("[data-paid]");
+  if (paidBtn) {
+    paidBtn.disabled = true;
+    try {
+      adminOrders = await api.setPaid(adminPass, order.dataset.id, paidBtn.dataset.paid === "1");
+      renderAdmin();
+    } catch {
+      paidBtn.disabled = false;
+      setStatus($("adminStatus"), "Změna se nepodařila, zkuste to znovu.", "err");
+    }
+  }
   if (e.target.closest("[data-del-yes]")) {
     try {
       adminOrders = await api.remove(adminPass, order.dataset.id);
@@ -797,7 +955,7 @@ function exportText(orders, totals) {
   orders.forEach((o, i) => {
     const items = orderedEntries(o.items || {}).map(([k, q]) => `${k} ×${q}`).join(", ");
     const contact = [o.phone || o.contact, o.email].filter(Boolean).join(", ");
-    lines.push(`${i + 1}. ${o.name} (${contact}) – ${items} – ${kc(orderPrice(o.items || {}))}${o.note ? ` – ${o.note}` : ""}`);
+    lines.push(`${i + 1}. ${o.vs ? `[VS ${o.vs}] ` : ""}${o.name} (${contact}) – ${items} – ${kc(orderPrice(o.items || {}))} – ${o.paid ? "ZAPLACENO" : "NEZAPLACENO"}${o.note ? ` – ${o.note}` : ""}`);
   });
   return lines.join("\n");
 }
@@ -820,11 +978,11 @@ $("csvBtn").addEventListener("click", () => {
   const orders = [...adminOrders].sort((a, b) => String(a.created).localeCompare(String(b.created)));
   const keys = combos().map((x) => x.key);
   const cell = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-  const rows = [["Jméno", "Telefon", "E-mail", "Poznámka", "Datum", ...keys, "Kusů", "Cena (Kč)"].map(cell).join(";")];
-  orders.forEach((o) => rows.push([o.name, o.phone || o.contact, o.email, o.note, fmtDate(o.updated || o.created),
-    ...keys.map((k) => o.items?.[k] || 0), totalPieces(o.items || {}), orderPrice(o.items || {})].map(cell).join(";")));
+  const rows = [["VS", "Jméno", "Telefon", "E-mail", "Poznámka", "Datum", ...keys, "Kusů", "Cena (Kč)", "Zaplaceno"].map(cell).join(";")];
+  orders.forEach((o) => rows.push([o.vs, o.name, o.phone || o.contact, o.email, o.note, fmtDate(o.updated || o.created),
+    ...keys.map((k) => o.items?.[k] || 0), totalPieces(o.items || {}), orderPrice(o.items || {}), o.paid ? fmtDate(o.paid) : "ne"].map(cell).join(";")));
   const totals = sumTotals(orders);
-  rows.push(["CELKEM", "", "", "", "", ...keys.map((k) => totals[k] || 0), totalPieces(totals), orderPrice(totals)].map(cell).join(";"));
+  rows.push(["", "CELKEM", "", "", "", "", ...keys.map((k) => totals[k] || 0), totalPieces(totals), orderPrice(totals), ""].map(cell).join(";"));
   const blob = new Blob(["﻿" + rows.join("\r\n")], { type: "text/csv;charset=utf-8" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
@@ -849,6 +1007,7 @@ if (saved) {
 }
 renderItems();
 renderSavedInfo();
+renderPayment();
 if (location.hash === "#sprava") showAdmin(true);
 </script>
 </body>

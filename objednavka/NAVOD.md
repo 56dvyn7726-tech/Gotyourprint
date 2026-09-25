@@ -29,6 +29,18 @@ a heslo do správy je `tricka`. Pro ostrý provoz udělejte kroky níže.
 
 Objednávky se od té chvíle ukládají do listu **Objednávky** ve vaší tabulce. Najdete je tam i bez stránky.
 
+### Platba převodem
+
+Na začátku skriptu vyplňte `BANK_ACCOUNT` (např. `'123456789/0100'`). Každá objednávka pak dostane
+vlastní **variabilní symbol** (1001, 1002, …; nikdy se neopakuje). Zákazník hned po objednání uvidí
+na stránce i v e-mailu číslo účtu, částku, VS a **QR Platbu** pro mobilní bankovnictví.
+
+Když vám přijde platba, najděte ve správě objednávku se stejným VS a klikněte na **Označit jako zaplaceno**.
+Zákazníkovi přijde e-mail „Platba přijata“ a zaplacenou objednávku už nemůže sám změnit ani zrušit.
+Ve správě vidíte, kolik je zaplaceno a kolik čeká na platbu, a můžete filtrovat nezaplacené.
+
+Další nastavení: `PAYMENT_MESSAGE` (zpráva pro příjemce), `VS_START` (první VS), `PAYMENT_DAYS` (splatnost).
+
 ### Potvrzovací e-maily
 
 Zákazník po odeslání, úpravě i zrušení objednávky dostane e-mail se shrnutím a cenou. E-mail odchází
