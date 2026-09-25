@@ -7,7 +7,8 @@
 const ADMIN_PASSWORD = 'ZMENTE-TOTO-HESLO';
 
 const SHEET_NAME = 'Objednávky';
-const HEADER = ['ID', 'Vytvořeno', 'Upraveno', 'Jméno', 'Kontakt', 'Poznámka', 'Položky', 'Kusů', 'Data (nemazat)'];
+const HEADER = ['ID', 'Vytvořeno', 'Upraveno', 'Jméno', 'Telefon', 'E-mail', 'Poznámka', 'Položky', 'Kusů', 'Cena (Kč)', 'Data (nemazat)'];
+const COL_DATA = HEADER.length; // poslední sloupec s položkami ve formátu JSON
 
 function doGet() {
   return out({ ok: true, message: 'Objednávky GotYourPrint běží.' });
@@ -82,8 +83,10 @@ function validId(id) {
 function saveOrder(o) {
   if (!o || !validId(o.id)) throw new Error('bad id');
   const name = safe(o.name, 100);
-  const contact = safe(o.contact, 150);
-  if (!name || !contact) throw new Error('missing name/contact');
+  const phone = safe(o.phone, 30);
+  const email = safe(o.email, 120);
+  if (!name || !phone || !email) throw new Error('missing name/phone/email');
+  const price = Math.max(0, Math.min(1000000, Math.round(Number(o.price) || 0)));
 
   const items = {};
   let count = 0;
@@ -101,7 +104,7 @@ function saveOrder(o) {
   const now = new Date();
   const rowNum = findRow(sh, o.id);
   const created = rowNum > 0 ? sh.getRange(rowNum, 2).getValue() : now;
-  const row = [o.id, created, now, name, contact, safe(o.note, 500), itemsText, count, JSON.stringify(items)];
+  const row = [o.id, created, now, name, phone, email, safe(o.note, 500), itemsText, count, price, JSON.stringify(items)];
 
   if (rowNum > 0) sh.getRange(rowNum, 1, 1, row.length).setValues([row]);
   else sh.appendRow(row);
@@ -122,15 +125,16 @@ function listOrders() {
   if (last < 2) return [];
   return sh.getRange(2, 1, last - 1, HEADER.length).getValues().map(function (r) {
     let items = {};
-    try { items = JSON.parse(r[8]); } catch (err) { /* poškozený řádek */ }
+    try { items = JSON.parse(r[COL_DATA - 1]); } catch (err) { /* poškozený řádek */ }
     const strip = function (v) { return String(v).replace(/^'/, ''); };
     return {
       id: r[0],
       created: r[1] instanceof Date ? r[1].toISOString() : String(r[1]),
       updated: r[2] instanceof Date ? r[2].toISOString() : String(r[2]),
       name: strip(r[3]),
-      contact: strip(r[4]),
-      note: strip(r[5]),
+      phone: strip(r[4]),
+      email: strip(r[5]),
+      note: strip(r[6]),
       items: items,
     };
   });

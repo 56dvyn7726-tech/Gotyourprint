@@ -73,6 +73,9 @@
   .cut[aria-selected="true"] .cut-name { color: var(--gold); }
   .cut-count { margin-left: auto; font: 700 0.8rem var(--body); color: var(--gold-ink); background: var(--gold); border-radius: 999px; padding: 2px 9px; }
   .cut-specs { color: var(--muted); font-size: 0.85rem; }
+  .cut-price { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .info-price { margin: -2px 0 8px; font-weight: 700; font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+  .info-price small { color: var(--muted); font-weight: 500; font-size: 0.85rem; }
   .cut-infos { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr)); gap: 16px; }
   .cut-info { background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 12px; align-content: start; }
   .cut-info.current { border-color: var(--gold); }
@@ -110,7 +113,7 @@
 
   /* Formulář */
   form { display: grid; gap: 14px; }
-  .fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+  .fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 14px; }
   label { display: grid; gap: 5px; font-size: 0.9rem; font-weight: 600; }
   input, textarea {
     font: 400 1rem var(--body); color: var(--text); background: var(--panel-2);
@@ -152,6 +155,7 @@
   .order-head b { font-size: 1.05rem; }
   .order-head span { color: var(--muted); font-size: 0.85rem; }
   .order-head .del { margin-left: auto; }
+  .order-price { color: var(--text) !important; font-weight: 700; }
   .order-items { color: var(--gold); font-weight: 600; }
   .order-note { color: var(--muted); font-size: 0.9rem; }
   .confirm { display: inline-flex; gap: 6px; align-items: center; font-size: 0.85rem; }
@@ -227,8 +231,11 @@
           <label for="fLast">Příjmení *
             <input id="fLast" name="lastName" required maxlength="50" autocomplete="family-name">
           </label>
-          <label for="fContact">Telefon nebo e-mail *
-            <input id="fContact" name="contact" required maxlength="150" autocomplete="tel">
+          <label for="fPhone">Telefon *
+            <input id="fPhone" name="phone" type="tel" required maxlength="30" autocomplete="tel" inputmode="tel" placeholder="777 123 456">
+          </label>
+          <label for="fEmail">E-mail *
+            <input id="fEmail" name="email" type="email" required maxlength="120" autocomplete="email" inputmode="email" placeholder="jan.novak@email.cz">
           </label>
         </div>
         <label for="fNote">Poznámka
@@ -305,7 +312,6 @@ const CONFIG = {
 
   title: "Combat Life Saver",
   deadline: "",                 // např. "Objednávky přijímáme do 15. 10. 2026"
-  price: 0,                     // cena za kus v Kč (0 = nezobrazovat)
 
   variants: [
     { id: "cerna", name: "Černá", print: "bílý potisk", color: "#161616", img: "img/cerna.jpg" },
@@ -315,7 +321,7 @@ const CONFIG = {
   // Střihy triček – každý má vlastní velikosti a rozměry (A = šířka, B = délka, C = rukáv, v cm)
   cuts: [
     {
-      id: "fit", name: "FIT",
+      id: "fit", name: "FIT", price: 479,     // cena za kus v Kč
       specs: ["Klasický střih", "100% bavlna", "180 g/m²"],
       info: "img/info-fit.jpg",
       chart: "img/tabulka-fit.jpg",
@@ -328,7 +334,7 @@ const CONFIG = {
       ],
     },
     {
-      id: "everyday", name: "EVERYDAY",
+      id: "everyday", name: "EVERYDAY", price: 479,
       specs: ["Klasický střih", "100% bavlna", "180 g/m²"],
       info: "img/info-everyday.jpg",
       chart: "img/tabulka-everyday.jpg",
@@ -353,6 +359,9 @@ const DEMO_KEY = "gyp-demo-orders-v2-" + CONFIG.title;
 const itemKey = (c, v, s) => `${c.name} ${v.name} ${s.id}`;   // např. "FIT Černá M"
 // všechny kombinace střih × barva × velikost v pořadí z nastavení
 const combos = () => CONFIG.cuts.flatMap((c) => CONFIG.variants.flatMap((v) => c.sizes.map((s) => ({ c, v, s, key: itemKey(c, v, s) }))));
+// cena objednávky podle cen střihů
+const orderPrice = (items) => combos().reduce((a, { c, key }) => a + (Number(items[key]) || 0) * (c.price || 0), 0);
+const kc = (n) => `${cz(n)} Kč`;
 const sumKeys = (items, keys) => keys.reduce((a, k) => a + (Number(items[k]) || 0), 0);
 // všechny velikosti napříč střihy (pro souhrnnou tabulku)
 const allSizes = () => {
@@ -425,7 +434,8 @@ function persistDraft() {
     cut: state.cut,
     first: $("fFirst").value,
     last: $("fLast").value,
-    contact: $("fContact").value,
+    phone: $("fPhone").value,
+    email: $("fEmail").value,
     note: $("fNote").value,
   });
 }
@@ -441,6 +451,7 @@ function buildShop() {
     <button type="button" class="cut" role="tab" data-cut="${c.id}" aria-selected="false">
       <span class="cut-name">${esc(c.name)}<span class="cut-count" hidden></span></span>
       <span class="cut-specs">${esc([...c.specs, `velikosti ${c.sizes[0].id}–${c.sizes[c.sizes.length - 1].id}`].join(" · "))}</span>
+      ${c.price ? `<span class="cut-price">${kc(c.price)} / ks</span>` : ""}
     </button>`).join("");
   $("cuts").addEventListener("click", (e) => {
     const b = e.target.closest("[data-cut]");
@@ -471,6 +482,7 @@ function buildShop() {
           ${c.info ? `<figure data-zoom="${esc(c.info)}"><img src="${esc(c.info)}" alt="Tričko ${esc(c.name)} – produktový list" loading="lazy"></figure>` : ""}
           <div>
             <h3>${esc(c.name)}</h3>
+            ${c.price ? `<p class="info-price">${kc(c.price)} <small>/ ks</small></p>` : ""}
             <ul>${c.specs.map((x) => `<li>${esc(x)}</li>`).join("")}<li>velikosti ${c.sizes[0].id}–${c.sizes[c.sizes.length - 1].id}</li></ul>
           </div>
         </div>
@@ -550,8 +562,8 @@ function renderItems() {
   const entries = orderedEntries(state.items);
   const total = totalPieces(state.items);
   $("recap").innerHTML = entries.length
-    ? entries.map(([k, q]) => `<div class="recap-row"><span>${esc(k)}</span><span>${q} ks</span></div>`).join("") +
-      `<div class="recap-row recap-total"><span>Celkem</span><span>${total} ks${CONFIG.price ? ` · ${cz(total * CONFIG.price)} Kč` : ""}</span></div>`
+    ? entries.map(([k, q]) => `<div class="recap-row"><span>${esc(k)} × ${q}</span><span>${kc(orderPrice({ [k]: q }))}</span></div>`).join("") +
+      `<div class="recap-row recap-total"><span>Celkem ${total} ks</span><span>${kc(orderPrice(state.items))}</span></div>`
     : `<span class="recap-empty">Zatím nemáte vybrané žádné tričko. Nahoře klikněte na velikost.</span>`;
 }
 
@@ -574,7 +586,7 @@ function renderSavedInfo() {
 }
 
 $("orderForm").addEventListener("input", (e) => {
-  if (e.target.value.trim()) e.target.removeAttribute("aria-invalid");
+  if (e.target.getAttribute("aria-invalid") === "true" && e.target.value.trim()) e.target.removeAttribute("aria-invalid");
   persistDraft();
 });
 
@@ -584,12 +596,19 @@ $("orderForm").addEventListener("submit", async (e) => {
   const first = $("fFirst").value.trim();
   const last = $("fLast").value.trim();
   const name = `${first} ${last}`;
-  const contact = $("fContact").value.trim();
+  const phone = $("fPhone").value.trim();
+  const email = $("fEmail").value.trim();
   if (!totalPieces(state.items)) return setStatus(status, "Vyberte prosím alespoň jedno tričko (klikněte na velikost).", "err");
 
   // povinná pole – chybějící zvýrazníme a přejdeme na první z nich
-  const missing = [["fFirst", first, "jméno"], ["fLast", last, "příjmení"], ["fContact", contact, "telefon nebo e-mail"]]
-    .filter(([id, value]) => { $(id).setAttribute("aria-invalid", String(!value)); return !value; });
+  const phoneOk = phone.replace(/[^\d]/g, "").length >= 9 && /^[+\d\s()-]+$/.test(phone);
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+  const missing = [
+    ["fFirst", first, "jméno"],
+    ["fLast", last, "příjmení"],
+    ["fPhone", phoneOk, phone ? "správné telefonní číslo (aspoň 9 číslic)" : "telefon"],
+    ["fEmail", emailOk, email ? "správný e-mail (např. jan.novak@email.cz)" : "e-mail"],
+  ].filter(([id, ok]) => { $(id).setAttribute("aria-invalid", String(!ok)); return !ok; });
   if (missing.length) {
     $(missing[0][0]).focus();
     const names = missing.map((m) => m[2]);
@@ -602,11 +621,11 @@ $("orderForm").addEventListener("submit", async (e) => {
   setStatus(status, "Ukládám…");
   if (!state.id) state.id = newId();
   try {
-    const res = await api.save({ id: state.id, name, contact, note: $("fNote").value.trim(), items: state.items });
+    const res = await api.save({ id: state.id, name, phone, email, note: $("fNote").value.trim(), items: state.items, price: orderPrice(state.items) });
     state.submitted = res.updated || new Date().toISOString();
     persistDraft();
     renderSavedInfo();
-    setStatus(status, `Hotovo! Objednávka (${totalPieces(state.items)} ks) je uložená. Děkujeme.`, "ok");
+    setStatus(status, `Hotovo! Objednávka (${totalPieces(state.items)} ks, ${kc(orderPrice(state.items))}) je uložená. Děkujeme.`, "ok");
   } catch (err) {
     setStatus(status, "Objednávku se nepodařilo uložit. Zkontrolujte připojení k internetu a zkuste to znovu.", "err");
   } finally {
@@ -706,7 +725,7 @@ function renderAdmin() {
     [pieces, plural(pieces, "tričko celkem", "trička celkem", "triček celkem")],
     ...CONFIG.cuts.map((c) => [sumKeys(totals, all.filter((x) => x.c === c).map((x) => x.key)), c.name]),
     ...CONFIG.variants.map((v) => [sumKeys(totals, all.filter((x) => x.v === v).map((x) => x.key)), v.name.toLowerCase()]),
-    ...(CONFIG.price ? [[cz(pieces * CONFIG.price) + " Kč", "k vybrání"]] : []),
+    [kc(orderPrice(totals)), "k vybrání celkem"],
   ].map(([n, l]) => `<div class="stat"><b>${n}</b><span>${esc(l)}</span></div>`).join("");
 
   const sizes = allSizes();
@@ -729,7 +748,9 @@ function renderAdmin() {
     <div class="order" data-id="${esc(o.id)}">
       <div class="order-head">
         <b>${i + 1}. ${esc(o.name)}</b>
-        <span>${esc(o.contact)}</span>
+        <span>${esc(o.phone || o.contact || "")}</span>
+        <span>${esc(o.email || "")}</span>
+        <span class="order-price">${kc(orderPrice(o.items || {}))}</span>
         <span>${fmtDate(o.updated || o.created)}</span>
         <span class="del">
           <button type="button" class="btn link" data-del>Smazat</button>
@@ -770,10 +791,11 @@ function exportText(orders, totals) {
     const sum = sumKeys(totals, c.sizes.map((s) => itemKey(c, v, s)));
     lines.push(`${c.name} ${v.name} (${v.print}) – ${parts.join(", ")} → celkem ${sum} ks`);
   }));
-  lines.push(`Celkem: ${totalPieces(totals)} ks, ${orders.length} ${plural(orders.length, "objednávka", "objednávky", "objednávek")}`, "", "OBJEDNÁVKY");
+  lines.push(`Celkem: ${totalPieces(totals)} ks, ${kc(orderPrice(totals))}, ${orders.length} ${plural(orders.length, "objednávka", "objednávky", "objednávek")}`, "", "OBJEDNÁVKY");
   orders.forEach((o, i) => {
     const items = orderedEntries(o.items || {}).map(([k, q]) => `${k} ×${q}`).join(", ");
-    lines.push(`${i + 1}. ${o.name} (${o.contact}) – ${items}${o.note ? ` – ${o.note}` : ""}`);
+    const contact = [o.phone || o.contact, o.email].filter(Boolean).join(", ");
+    lines.push(`${i + 1}. ${o.name} (${contact}) – ${items} – ${kc(orderPrice(o.items || {}))}${o.note ? ` – ${o.note}` : ""}`);
   });
   return lines.join("\n");
 }
@@ -796,11 +818,11 @@ $("csvBtn").addEventListener("click", () => {
   const orders = [...adminOrders].sort((a, b) => String(a.created).localeCompare(String(b.created)));
   const keys = combos().map((x) => x.key);
   const cell = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-  const rows = [["Jméno", "Kontakt", "Poznámka", "Datum", ...keys, "Celkem"].map(cell).join(";")];
-  orders.forEach((o) => rows.push([o.name, o.contact, o.note, fmtDate(o.updated || o.created),
-    ...keys.map((k) => o.items?.[k] || 0), totalPieces(o.items || {})].map(cell).join(";")));
+  const rows = [["Jméno", "Telefon", "E-mail", "Poznámka", "Datum", ...keys, "Kusů", "Cena (Kč)"].map(cell).join(";")];
+  orders.forEach((o) => rows.push([o.name, o.phone || o.contact, o.email, o.note, fmtDate(o.updated || o.created),
+    ...keys.map((k) => o.items?.[k] || 0), totalPieces(o.items || {}), orderPrice(o.items || {})].map(cell).join(";")));
   const totals = sumTotals(orders);
-  rows.push(["CELKEM", "", "", "", ...keys.map((k) => totals[k] || 0), totalPieces(totals)].map(cell).join(";"));
+  rows.push(["CELKEM", "", "", "", "", ...keys.map((k) => totals[k] || 0), totalPieces(totals), orderPrice(totals)].map(cell).join(";"));
   const blob = new Blob(["﻿" + rows.join("\r\n")], { type: "text/csv;charset=utf-8" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
@@ -819,7 +841,8 @@ if (window.claude) $("csvBtn").hidden = true;
 if (saved) {
   $("fFirst").value = saved.first || "";
   $("fLast").value = saved.last || "";
-  $("fContact").value = saved.contact || "";
+  $("fPhone").value = saved.phone || "";
+  $("fEmail").value = saved.email || "";
   $("fNote").value = saved.note || "";
 }
 renderItems();

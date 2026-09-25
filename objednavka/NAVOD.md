@@ -1,12 +1,13 @@
 # Objednávka triček – návod
 
 Stránka `index.html` v této složce slouží k hromadné objednávce triček s daným potiskem.
-Zákazník vybere střih (FIT nebo EVERYDAY), barvu, velikost a počet kusů, vidí tabulku rozměrů a vyplní jméno a kontakt.
+Zákazník vybere střih (FIT nebo EVERYDAY), barvu, velikost a počet kusů, vidí tabulku rozměrů a vyplní jméno, příjmení, telefon a e-mail.
 Stránka si jeho volby pamatuje, takže když se na odkaz vrátí, může objednávku upravit nebo zrušit.
 
 Vy pod odkazem **Správa objednávek** (dole na stránce, nebo adresa končící `#sprava`) zadáte heslo a uvidíte:
 - souhrn pro výrobu (kolik kusů které barvy a velikosti),
-- seznam všech objednávek se jménem, kontaktem a poznámkou,
+- seznam všech objednávek se jménem, telefonem, e-mailem, poznámkou a cenou,
+- kolik peněz celkem vybrat,
 - tlačítka **Kopírovat seznam** (text do e-mailu nebo zprávy) a **Stáhnout pro Excel (CSV)**,
 - možnost smazat objednávku.
 
@@ -36,9 +37,8 @@ Objednávky se od té chvíle ukládají do listu **Objednávky** ve vaší tabu
 Vše je v `index.html` v bloku `CONFIG`:
 - `title`: název (potisk) nahoře na stránce,
 - `deadline`: text s termínem uzávěrky (např. „Objednávky do 15. 10.“),
-- `price`: cena za kus, zobrazí se zákazníkovi i v souhrnu (0 = skrýt),
 - `variants`: barvy a fotky (`img/cerna.jpg`, `img/oliva.jpg`),
-- `cuts`: střihy (teď **FIT** a **EVERYDAY**). Každý má vlastní popis (`specs`), obrázek tabulky (`chart`)
+- `cuts`: střihy (teď **FIT** a **EVERYDAY**, obojí za 479 Kč). Každý má vlastní cenu (`price`), popis (`specs`), obrázek tabulky (`chart`)
   a velikosti s rozměry A, B a C. Další střih přidáte zkopírováním jednoho bloku.
 
 ## 3. Zveřejnění
