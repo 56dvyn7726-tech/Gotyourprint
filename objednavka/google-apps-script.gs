@@ -8,7 +8,7 @@ const ADMIN_PASSWORD = 'ZMENTE-TOTO-HESLO';
 
 // ---- Potvrzovací e-maily zákazníkům (odcházejí z vašeho účtu Google) ----
 const SEND_CONFIRMATION = true;              // false = e-maily neposílat
-const SHOP_NAME = 'GotYourPrint';            // jméno odesílatele
+const SHOP_NAME = '';                        // jméno odesílatele a podpis v e-mailu (prázdné = jméno vašeho účtu Google, bez podpisu)
 const ORDER_TITLE = 'Combat Life Saver';     // co se objednává
 const OWNER_EMAIL = '';                      // váš e-mail: dostanete kopii každého potvrzení (prázdné = ne)
 const PAGE_URL = '';                         // odkaz na objednávkovou stránku (vloží se do e-mailu)
@@ -230,14 +230,15 @@ function sendMail(kind, o) {
       '<h2 style="margin:0 0 8px">' + esc(heading) + '</h2>' +
       '<p style="margin:0 0 8px">Dobrý den, ' + esc(o.name) + ',<br>' + intro + '</p>' +
       table + contact + info + link +
-      '<p style="margin:16px 0 0;color:#777">' + esc(SHOP_NAME) + '</p></div>';
+      (SHOP_NAME ? '<p style="margin:16px 0 0;color:#777">' + esc(SHOP_NAME) + '</p>' : '') + '</div>';
 
     const text = heading + '\n\n' + 'Dobrý den, ' + o.name + ',\n' + intro + '\n\n' +
       (kind === 'cancel' ? '' : keys.map(function (k) { return k + ': ' + o.items[k] + ' ks'; }).join('\n') +
         '\nCelkem: ' + count + ' ks, ' + kc(total) + '\n\n' + EMAIL_INFO.join('\n') + '\n') +
-      (PAGE_URL && kind !== 'cancel' ? '\nÚprava objednávky: ' + PAGE_URL + '\n' : '') + '\n' + SHOP_NAME;
+      (PAGE_URL && kind !== 'cancel' ? '\nÚprava objednávky: ' + PAGE_URL + '\n' : '') + (SHOP_NAME ? '\n' + SHOP_NAME : '');
 
-    const mail = { to: o.email, subject: subject, htmlBody: html, body: text, name: SHOP_NAME };
+    const mail = { to: o.email, subject: subject, htmlBody: html, body: text };
+    if (SHOP_NAME) mail.name = SHOP_NAME;
     if (OWNER_EMAIL) {
       mail.bcc = OWNER_EMAIL;
       mail.replyTo = OWNER_EMAIL;

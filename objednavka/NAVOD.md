@@ -35,7 +35,7 @@ Zákazník po odeslání, úpravě i zrušení objednávky dostane e-mail se shr
 z vašeho účtu Google (uvidíte ho v Gmailu v Odeslané poště). Nastavení je na začátku skriptu:
 
 - `SEND_CONFIRMATION`: `true` e-maily posílá, `false` je vypne,
-- `SHOP_NAME`: jméno odesílatele,
+- `SHOP_NAME`: jméno odesílatele a podpis. Prázdné = odesílatelem bude jméno vašeho účtu Google a e-mail nebude mít podpis.
 - `OWNER_EMAIL`: váš e-mail. Dostanete skrytou kopii každého potvrzení a odpovědi zákazníků půjdou vám.
 - `PAGE_URL`: odkaz na objednávkovou stránku, vloží se do e-mailu kvůli úpravám,
 - `EMAIL_INFO`: vlastní řádky textu, např. číslo účtu pro platbu nebo informace o vyzvednutí.
