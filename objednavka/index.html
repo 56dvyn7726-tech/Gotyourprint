@@ -625,7 +625,9 @@ $("orderForm").addEventListener("submit", async (e) => {
     state.submitted = res.updated || new Date().toISOString();
     persistDraft();
     renderSavedInfo();
-    setStatus(status, `Hotovo! Objednávka (${totalPieces(state.items)} ks, ${kc(orderPrice(state.items))}) je uložená. Děkujeme.`, "ok");
+    const mailNote = res.emailSent ? ` Potvrzení jsme poslali na ${email}.`
+      : !CONFIG.scriptUrl ? " (V ukázkovém režimu se potvrzovací e-mail neposílá.)" : "";
+    setStatus(status, `Hotovo! Objednávka (${totalPieces(state.items)} ks, ${kc(orderPrice(state.items))}) je uložená. Děkujeme.${mailNote}`, "ok");
   } catch (err) {
     setStatus(status, "Objednávku se nepodařilo uložit. Zkontrolujte připojení k internetu a zkuste to znovu.", "err");
   } finally {

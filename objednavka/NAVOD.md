@@ -29,6 +29,20 @@ a heslo do správy je `tricka`. Pro ostrý provoz udělejte kroky níže.
 
 Objednávky se od té chvíle ukládají do listu **Objednávky** ve vaší tabulce. Najdete je tam i bez stránky.
 
+### Potvrzovací e-maily
+
+Zákazník po odeslání, úpravě i zrušení objednávky dostane e-mail se shrnutím a cenou. E-mail odchází
+z vašeho účtu Google (uvidíte ho v Gmailu v Odeslané poště). Nastavení je na začátku skriptu:
+
+- `SEND_CONFIRMATION`: `true` e-maily posílá, `false` je vypne,
+- `SHOP_NAME`: jméno odesílatele,
+- `OWNER_EMAIL`: váš e-mail. Dostanete skrytou kopii každého potvrzení a odpovědi zákazníků půjdou vám.
+- `PAGE_URL`: odkaz na objednávkovou stránku, vloží se do e-mailu kvůli úpravám,
+- `EMAIL_INFO`: vlastní řádky textu, např. číslo účtu pro platbu nebo informace o vyzvednutí.
+
+Při prvním nasazení s e-maily Google požádá o povolení **odesílat e-maily vaším jménem**. Povolte ho.
+Běžný účet Gmail zvládne asi **100 e-mailů denně** (s kopií pro vás se každé potvrzení počítá dvakrát).
+
 > Když později kód v Apps Scriptu změníte, nasaďte ho znovu přes **Nasadit → Spravovat nasazení → upravit → Nová verze**.
 > URL zůstane stejná.
 
