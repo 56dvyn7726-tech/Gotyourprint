@@ -1,7 +1,8 @@
 import * as Location from 'expo-location';
 import React, { useEffect, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { Button, Card, Chip, colors, Muted, SectionTitle } from '../../components/ui';
+import { notify } from '../../lib/dialog';
 import { cancelReminders, scheduleDailyReminder } from '../../lib/notifications';
 import { useStore } from '../../lib/store';
 import { Place, searchPlaces } from '../../lib/weather';
@@ -19,21 +20,24 @@ export default function SettingsScreen() {
   useEffect(() => setArea(String(garden.areaM2)), [garden.areaM2]);
   useEffect(() => setApiKey(settings.apiKey), [settings.apiKey]);
 
+  // Oznámení na pozadí prohlížeč neumí – ve webové verzi připomínku skryjeme.
+  const canNotify = Platform.OS !== 'web';
+
   // Připomínku přeplánuj, když se změní počet rostlin (mění se text oznámení).
   useEffect(() => {
-    if (settings.notifyEnabled) scheduleDailyReminder(settings.notifyHour, garden.plants.length).catch(() => {});
-  }, [garden.plants.length, settings.notifyEnabled, settings.notifyHour]);
+    if (canNotify && settings.notifyEnabled) scheduleDailyReminder(settings.notifyHour, garden.plants.length).catch(() => {});
+  }, [canNotify, garden.plants.length, settings.notifyEnabled, settings.notifyHour]);
 
   const useGps = async () => {
     setBusy(true);
     try {
       const perm = await Location.requestForegroundPermissionsAsync();
       if (!perm.granted) {
-        Alert.alert('Bez polohy', 'Povol přístup k poloze, nebo vyhledej obec ručně.');
+        notify('Bez polohy', 'Povol přístup k poloze, nebo vyhledej obec ručně.');
         return;
       }
       const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      let label = `${pos.coords.latitude.toFixed(3)}, ${pos.coords.longitude.toFixed(3)}`;
+      let label = `Moje poloha (${pos.coords.latitude.toFixed(2)}, ${pos.coords.longitude.toFixed(2)})`;
       try {
         const [addr] = await Location.reverseGeocodeAsync(pos.coords);
         if (addr) label = [addr.city ?? addr.subregion, addr.region].filter(Boolean).join(', ') || label;
@@ -42,7 +46,7 @@ export default function SettingsScreen() {
       }
       updateGarden({ location: { lat: pos.coords.latitude, lon: pos.coords.longitude, label } });
     } catch (e: any) {
-      Alert.alert('Poloha nedostupná', e?.message ?? 'Zkus to venku nebo vyhledej obec ručně.');
+      notify('Poloha nedostupná', e?.message ?? 'Zkus to venku nebo vyhledej obec ručně.');
     } finally {
       setBusy(false);
     }
@@ -54,7 +58,7 @@ export default function SettingsScreen() {
     try {
       setPlaces(await searchPlaces(query.trim()));
     } catch (e: any) {
-      Alert.alert('Chyba', e?.message ?? 'Vyhledávání selhalo.');
+      notify('Chyba', e?.message ?? 'Vyhledávání selhalo.');
     } finally {
       setBusy(false);
     }
@@ -64,7 +68,7 @@ export default function SettingsScreen() {
     if (on) {
       const ok = await scheduleDailyReminder(settings.notifyHour, garden.plants.length);
       if (!ok) {
-        Alert.alert('Oznámení nepovolena', 'Povol oznámení pro Zahradníka v nastavení telefonu.');
+        notify('Oznámení nepovolena', 'Povol oznámení pro Zahradníka v nastavení telefonu.');
         return;
       }
     } else {
@@ -126,8 +130,8 @@ export default function SettingsScreen() {
           ))}
         </Card>
 
-        <SectionTitle>Denní připomínka</SectionTitle>
-        <Card>
+        {canNotify && <SectionTitle>Denní připomínka</SectionTitle>}
+        {canNotify && <Card>
           <View style={styles.switchRow}>
             <Text style={{ fontSize: 16, color: colors.text, flex: 1 }}>Každé ráno mi připomeň péči o zahradu</Text>
             <Switch value={settings.notifyEnabled} onValueChange={toggleNotify} trackColor={{ true: colors.primary }} />
@@ -139,7 +143,7 @@ export default function SettingsScreen() {
               ))}
             </View>
           )}
-        </Card>
+        </Card>}
 
         <SectionTitle>Poradna s fotkou (AI)</SectionTitle>
         <Card>
@@ -162,7 +166,7 @@ export default function SettingsScreen() {
             variant="secondary"
             onPress={() => {
               updateSettings({ apiKey: apiKey.trim() });
-              Alert.alert('Uloženo', apiKey.trim() ? 'API klíč je uložen.' : 'API klíč byl odstraněn.');
+              notify('Uloženo', apiKey.trim() ? 'API klíč je uložen.' : 'API klíč byl odstraněn.');
             }}
             style={{ marginTop: 8 }}
           />

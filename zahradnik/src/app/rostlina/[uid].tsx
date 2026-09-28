@@ -1,10 +1,11 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { parseNumber, PlacementForm, PlacementValues } from '../../components/PlacementForm';
 import { Banner, Button, Card, colors, Muted, SectionTitle } from '../../components/ui';
 import { getPlant } from '../../data/plants';
 import { adviseForPlant } from '../../lib/advice';
+import { confirmAsk } from '../../lib/dialog';
 import { isoDate, MONTH_NAMES } from '../../lib/season';
 import { useStore } from '../../lib/store';
 
@@ -50,18 +51,12 @@ export default function PlantDetailScreen() {
     setEditing(false);
   };
 
-  const remove = () =>
-    Alert.alert('Odebrat rostlinu?', `${plant.name} bude odebrána ze zahrady.`, [
-      { text: 'Zrušit', style: 'cancel' },
-      {
-        text: 'Odebrat',
-        style: 'destructive',
-        onPress: () => {
-          removePlant(gp.uid);
-          router.back();
-        },
-      },
-    ]);
+  const remove = async () => {
+    if (!(await confirmAsk('Odebrat rostlinu?', `${plant.name} bude odebrána ze zahrady.`, 'Odebrat', true))) return;
+    removePlant(gp.uid);
+    if (router.canGoBack()) router.back();
+    else router.replace('/zahrada');
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>

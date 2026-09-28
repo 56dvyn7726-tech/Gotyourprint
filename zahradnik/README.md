@@ -4,7 +4,7 @@ Mobilní aplikace pro iOS a Android (Expo / React Native), která ti každý den
 
 ## Co umí
 
-- **Katalog rostlin** – 30 běžných rostlin českých zahrad (zelenina, ovoce, bylinky, okrasné, trávník) s péčí po měsících, tipy a zajímavostmi.
+- **Katalog rostlin** – 31 běžných rostlin českých zahrad (zelenina, ovoce, bylinky, okrasné, trávník) s péčí po měsících, tipy a zajímavostmi.
 - **Moje zahrada** – název, rozloha, poloha (GPS nebo vyhledání obce). U každé rostliny umístění (záhon / květináč / skleník), slunce, plocha a počet kusů.
 - **Počasí** – teplota, srážky za posledních 7 dní, předpověď na týden a výpar (evapotranspirace) z [Open-Meteo](https://open-meteo.com) (zdarma, bez registrace).
 - **Denní rada k zálivce** – pro každou rostlinu spočítá vodní bilanci za posledních 5 dní:
@@ -27,6 +27,21 @@ npx expo start
 ```
 
 Pak naskenuj QR kód aplikací **Expo Go** (iOS: fotoaparát, Android: aplikace Expo Go) – aplikace se spustí přímo v telefonu.
+
+### Webová verze (odkaz do prohlížeče)
+
+Stejná aplikace běží i v prohlížeči telefonu:
+**https://56dvyn7726-tech.github.io/Gotyourprint/zahradnik-app/**
+V Safari / Chrome ji přes *Sdílet → Přidat na plochu* uložíš jako ikonu. Na webu nejsou ranní oznámení
+a data se ukládají jen v daném prohlížeči.
+
+Webovou verzi znovu sestavíš a zkopíruješ do složky, kterou servíruje GitHub Pages:
+
+```bash
+node scripts/build-web.mjs /Gotyourprint/zahradnik-app ../zahradnik-app
+```
+
+### Instalovatelná aplikace
 
 Pro instalovatelnou aplikaci (APK / App Store) použij EAS Build:
 

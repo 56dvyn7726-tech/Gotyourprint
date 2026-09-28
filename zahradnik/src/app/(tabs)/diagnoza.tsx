@@ -1,10 +1,12 @@
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Banner, Button, Card, Chip, colors, Muted, SectionTitle } from '../../components/ui';
 import { getPlant } from '../../data/plants';
 import { Diagnosis, diagnosePhoto, explainError } from '../../lib/diagnose';
+import { confirmAsk, notify } from '../../lib/dialog';
+import { downscaleInBrowser } from '../../lib/downscale';
 import { useStore } from '../../lib/store';
 
 type MediaType = 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
@@ -34,23 +36,28 @@ export default function DiagnoseScreen() {
       ? await ImagePicker.requestCameraPermissionsAsync()
       : await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
-      Alert.alert('Chybí oprávnění', fromCamera ? 'Povol přístup k fotoaparátu v nastavení telefonu.' : 'Povol přístup k fotkám v nastavení telefonu.');
+      notify('Chybí oprávnění', fromCamera ? 'Povol přístup k fotoaparátu v nastavení telefonu.' : 'Povol přístup k fotkám v nastavení telefonu.');
       return;
     }
     const options: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], quality: 0.5, base64: true };
     const res = fromCamera ? await ImagePicker.launchCameraAsync(options) : await ImagePicker.launchImageLibraryAsync(options);
     if (res.canceled || !res.assets[0]?.base64) return;
     const asset = res.assets[0];
-    if (asset.base64!.length > MAX_BASE64) {
-      Alert.alert('Fotka je moc velká', 'Zkus ji vyfotit znovu nebo vybrat menší.');
+    const mt = asset.mimeType as MediaType | undefined;
+    let base64 = asset.base64!;
+    let mediaType: MediaType = mt && ['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(mt) ? mt : 'image/jpeg';
+    if (Platform.OS === 'web') {
+      try {
+        ({ base64, mediaType } = await downscaleInBrowser(base64, mediaType));
+      } catch {
+        // Formát, který prohlížeč neumí načíst (např. HEIC) – pošleme originál.
+      }
+    }
+    if (base64.length > MAX_BASE64) {
+      notify('Fotka je moc velká', 'Zkus ji vyfotit znovu nebo vybrat menší.');
       return;
     }
-    const mt = asset.mimeType as MediaType | undefined;
-    setPhoto({
-      uri: asset.uri,
-      base64: asset.base64!,
-      mediaType: mt && ['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(mt) ? mt : 'image/jpeg',
-    });
+    setPhoto({ uri: asset.uri, base64, mediaType });
     setResult(null);
     setError(null);
   };
@@ -58,10 +65,12 @@ export default function DiagnoseScreen() {
   const analyze = async () => {
     if (!photo) return;
     if (!settings.apiKey) {
-      Alert.alert('Chybí API klíč', 'Pro rozpoznání problému z fotky zadej v Nastavení svůj Anthropic API klíč.', [
-        { text: 'Zrušit', style: 'cancel' },
-        { text: 'Nastavení', onPress: () => router.push('/nastaveni') },
-      ]);
+      const go = await confirmAsk(
+        'Chybí API klíč',
+        'Pro rozpoznání problému z fotky zadej v Nastavení svůj Anthropic API klíč. Přejít do Nastavení?',
+        'Nastavení',
+      );
+      if (go) router.push('/nastaveni');
       return;
     }
     setLoading(true);
