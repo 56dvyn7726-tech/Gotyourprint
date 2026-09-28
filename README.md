@@ -52,3 +52,7 @@ Otevřete `app.js` a upravte `CONFIG`:
   ```
 
 Pro vyzkoušení stačí otevřít `index.html` v prohlížeči.
+
+## Zahradník (mobilní aplikace)
+
+Složka [`zahradnik/`](zahradnik/) obsahuje samostatnou mobilní aplikaci pro iOS a Android na péči o zahradu – viz [zahradnik/README.md](zahradnik/README.md).
