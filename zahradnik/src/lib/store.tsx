@@ -21,7 +21,7 @@ interface Store {
   weatherError: string | null;
   weatherLoading: boolean;
   updateGarden: (patch: Partial<Garden>) => void;
-  addPlant: (p: Omit<GardenPlant, 'uid' | 'addedAt'>) => void;
+  addPlant: (p: Omit<GardenPlant, 'uid' | 'addedAt'>) => string;
   updatePlant: (uid: string, patch: Partial<GardenPlant>) => void;
   removePlant: (uid: string) => void;
   updateSettings: (patch: Partial<Settings>) => void;
@@ -74,6 +74,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         addedAt: new Date().toISOString(),
       };
       mutateGarden((prev) => ({ ...prev, plants: [...prev.plants, gp] }));
+      return gp.uid;
     },
     [mutateGarden],
   );
