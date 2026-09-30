@@ -2,7 +2,6 @@ import { DayWeather, GardenLocation, Weather } from '../types';
 
 // Open-Meteo: zdarma, bez API klíče, obsahuje i referenční evapotranspiraci (ET₀).
 const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
-const GEOCODE_URL = 'https://geocoding-api.open-meteo.com/v1/search';
 
 const DAILY = [
   'temperature_2m_max',
@@ -51,26 +50,6 @@ export async function fetchWeather(loc: GardenLocation): Promise<Weather> {
     today: days[idx],
     forecast: days.slice(idx + 1),
   };
-}
-
-export interface Place {
-  name: string;
-  region: string;
-  lat: number;
-  lon: number;
-}
-
-export async function searchPlaces(query: string): Promise<Place[]> {
-  const url = `${GEOCODE_URL}?name=${encodeURIComponent(query)}&count=8&language=cs&format=json`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error('Vyhledávání místa selhalo.');
-  const json = await res.json();
-  return (json.results ?? []).map((r: any) => ({
-    name: r.name,
-    region: [r.admin1, r.country].filter(Boolean).join(', '),
-    lat: r.latitude,
-    lon: r.longitude,
-  }));
 }
 
 /** WMO kódy počasí → česky + emoji. */

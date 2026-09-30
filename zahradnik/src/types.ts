@@ -31,6 +31,11 @@ export interface Plant {
   facts: string[];
 }
 
+export interface LatLon {
+  lat: number;
+  lon: number;
+}
+
 export interface GardenPlant {
   uid: string;
   plantId: string;
@@ -44,6 +49,10 @@ export interface GardenPlant {
   /** ISO datum poslední zálivky a odhad množství v mm (= l/m²). */
   lastWatered?: string;
   lastWateredMm?: number;
+  /** Umístění na plánu zahrady. */
+  pos?: LatLon;
+  /** Obkreslený záhon (mnohoúhelník) – z něj se počítá plocha. */
+  shape?: LatLon[];
 }
 
 export interface GardenLocation {
@@ -56,6 +65,8 @@ export interface Garden {
   name: string;
   areaM2: number;
   location?: GardenLocation;
+  /** Obkreslené hranice zahrady na satelitní mapě. */
+  outline?: LatLon[];
   plants: GardenPlant[];
 }
 

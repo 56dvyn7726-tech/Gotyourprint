@@ -55,9 +55,22 @@ html = html
 fs.writeFileSync(indexPath, html);
 
 // Statický hosting nezná trasy aplikace – kopie index.html zajistí, že funguje i obnovení stránky.
+// Statické trasy bereme ze souborů v src/app (bez layoutů, skupin „(tabs)“ a dynamických [param]).
+function staticRoutes(dir, prefix = '') {
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+    if (e.isDirectory()) {
+      if (e.name.startsWith('[')) return [];
+      const seg = /^\(.*\)$/.test(e.name) ? '' : `${e.name}/`;
+      return staticRoutes(path.join(dir, e.name), prefix + seg);
+    }
+    const name = e.name.replace(/\.tsx?$/, '');
+    if (name.startsWith('_') || name.startsWith('+') || name === 'index' || name.startsWith('[')) return [];
+    return [prefix + name];
+  });
+}
 const plantsSrc = fs.readFileSync('src/data/plants.ts', 'utf8');
 const plantIds = [...plantsSrc.matchAll(/^ {4}id: '([^']+)'/gm)].map((m) => m[1]);
-const routes = ['zahrada', 'diagnoza', 'nastaveni', 'katalog', ...plantIds.map((id) => `pridat/${id}`)];
+const routes = [...staticRoutes('src/app'), ...plantIds.map((id) => `pridat/${id}`)];
 for (const r of routes) {
   fs.mkdirSync(path.join(out, r), { recursive: true });
   fs.writeFileSync(path.join(out, r, 'index.html'), html);
