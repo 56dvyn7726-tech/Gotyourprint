@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Avatar, Card, Chip, colors, fonts, haptic, IconButton, T, TAB_BAR_SPACE } from '../../components/ui';
+import { Avatar, Card, Chip, colors, font, haptic, IconButton, T, TAB_BAR_SPACE } from '../../components/ui';
 import { CATEGORY_TINT } from '../../data/categories';
 import { CATEGORIES, getPlant } from '../../data/plants';
 import { formatArea, polygonArea } from '../../lib/geo';
@@ -45,7 +45,7 @@ export default function GardenScreen() {
 
       <View style={styles.stats}>
         <StatTile icon="resize" value={formatArea(area)} label={garden.outline ? 'z mapy' : 'rozloha'} tint={colors.primarySoft} color={colors.primary} />
-        <StatTile icon="leaf" value={`${garden.plants.length}`} label={plural(garden.plants.length, 'rostlina', 'rostliny', 'rostlin')} tint="#EFE2F6" color="#7A45A0" />
+        <StatTile icon="leaf" value={`${garden.plants.length}`} label={plural(garden.plants.length, 'rostlina', 'rostliny', 'rostlin')} tint={colors.purpleSoft} color="#8E3FC0" />
         <StatTile icon="water" value={`${thirsty}`} label="zalít dnes" tint={colors.waterSoft} color={colors.water} />
       </View>
 
@@ -141,16 +141,16 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   stats: { flexDirection: 'row', gap: 10, marginBottom: 12 },
   stat: { flex: 1, borderRadius: 20, padding: 14, gap: 2 },
-  statValue: { fontFamily: fonts.extrabold, fontSize: 20, marginTop: 6 },
-  statLabel: { fontFamily: fonts.medium, fontSize: 12, color: colors.muted },
+  statValue: { ...font.extrabold, fontSize: 20, marginTop: 6 },
+  statLabel: { ...font.medium, fontSize: 12, color: colors.muted },
   mapRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   mapIcon: { width: 42, height: 42, borderRadius: 14, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 },
   cell: { width: '50%', padding: 6 },
-  tile: { backgroundColor: colors.surface, borderRadius: 24, padding: 14, boxShadow: '0 2px 8px rgba(18, 58, 41, 0.06)' },
+  tile: { backgroundColor: colors.surface, borderRadius: 24, padding: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)', boxShadow: '0 4px 16px rgba(20,60,40,0.07)' },
   tileTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  tileName: { fontFamily: fonts.bold, fontSize: 16, color: colors.text, marginTop: 10 },
-  tileNote: { fontFamily: fonts.medium, fontSize: 12, color: colors.muted, marginTop: 1 },
+  tileName: { ...font.bold, fontSize: 16, color: colors.text, marginTop: 10 },
+  tileNote: { ...font.medium, fontSize: 12, color: colors.muted, marginTop: 1 },
   status: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 4, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3, marginTop: 10 },
-  statusText: { fontFamily: fonts.bold, fontSize: 11 },
+  statusText: { ...font.bold, fontSize: 11 },
 });

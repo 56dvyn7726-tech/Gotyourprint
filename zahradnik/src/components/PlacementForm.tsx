@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import React from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Placement, Sun } from '../types';
-import { colors, fonts, haptic, IconName, Input, T } from './ui';
+import { colors, font, haptic, IconName, Input, T } from './ui';
 
 export interface PlacementValues {
   placement: Placement;
@@ -124,15 +124,15 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 14,
     borderRadius: 20,
-    backgroundColor: colors.surface,
-    borderWidth: 1.5,
-    borderColor: colors.border,
+    backgroundColor: 'rgba(255,255,255,0.6)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.9)',
   },
-  tileOn: { backgroundColor: colors.forest, borderColor: colors.forest },
-  tileText: { fontFamily: fonts.bold, fontSize: 14, color: colors.text },
-  stepper: { flex: 1, backgroundColor: colors.surface, borderRadius: 20, padding: 12, borderWidth: 1.5, borderColor: colors.border },
+  tileOn: { backgroundColor: colors.primaryBright, borderColor: colors.primaryBright, boxShadow: '0 6px 16px rgba(52,199,89,0.35)' },
+  tileText: { ...font.bold, fontSize: 14, color: colors.text },
+  stepper: { flex: 1, backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 20, padding: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)' },
   stepRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
   stepBtn: { width: 36, height: 36, borderRadius: 12, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
-  stepInput: { flex: 1, minWidth: 0, textAlign: 'center', fontFamily: fonts.extrabold, fontSize: 20, color: colors.text, paddingVertical: 4 },
-  unit: { fontFamily: fonts.medium, fontSize: 12, color: colors.muted, textAlign: 'center', marginTop: 2 },
+  stepInput: { flex: 1, minWidth: 0, textAlign: 'center', ...font.extrabold, fontSize: 20, color: colors.text, paddingVertical: 4 },
+  unit: { ...font.medium, fontSize: 12, color: colors.muted, textAlign: 'center', marginTop: 2 },
 });

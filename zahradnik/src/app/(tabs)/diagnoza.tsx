@@ -6,7 +6,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Banner, Button, Card, Chip, colors, fonts, IconName, Input, T, TAB_BAR_SPACE } from '../../components/ui';
+import { Banner, Button, Card, Chip, colors, shadow, font, IconName, Input, T, TAB_BAR_SPACE } from '../../components/ui';
 import { getPlant } from '../../data/plants';
 import { Diagnosis, diagnosePhoto, explainError } from '../../lib/diagnose';
 import { confirmAsk, notify } from '../../lib/dialog';
@@ -39,7 +39,10 @@ export default function DiagnoseScreen() {
   const pick = async (fromCamera: boolean) => {
     const perm = fromCamera ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
-      notify('Chybí oprávnění', fromCamera ? 'Povol přístup k fotoaparátu v nastavení telefonu.' : 'Povol přístup k fotkám v nastavení telefonu.');
+      notify(
+        'Chybí oprávnění',
+        fromCamera ? 'Povol přístup k fotoaparátu v nastavení telefonu.' : 'Povol přístup k fotkám v nastavení telefonu.',
+      );
       return;
     }
     const options: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], quality: 0.5, base64: true };
@@ -101,14 +104,17 @@ export default function DiagnoseScreen() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView ref={scrollRef} contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE }} keyboardShouldPersistTaps="handled">
-        <LinearGradient colors={['#2A1F4F', '#5B3F9E', '#8A63D2']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.hero, { paddingTop: insets.top + 20 }]}>
-          <T v="caption" color="rgba(255,255,255,0.7)">
-            Poradna
-          </T>
-          <T v="h1" color={colors.white}>
-            Co jí je? 🔍
-          </T>
-          <T v="body" color="rgba(255,255,255,0.85)" style={{ marginTop: 6 }}>
+        <View style={{ paddingHorizontal: 20, paddingTop: insets.top + 12, paddingBottom: 14 }}>
+          <T v="caption">Poradna</T>
+          <T v="largeTitle">Co jí je?</T>
+        </View>
+        <LinearGradient
+          colors={['#6E4BC9', '#9A6BE0', '#C49BF0']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0.7, y: 1 }}
+          style={[styles.hero, shadow.md]}
+        >
+          <T v="body" color="rgba(255,255,255,0.95)">
             Vyfoť nemocnou rostlinu – skvrny, žloutnutí, škůdce, vadnutí. Zaostři na postižené místo za denního světla.
           </T>
           {!photo && (
@@ -119,7 +125,10 @@ export default function DiagnoseScreen() {
                 </View>
                 <Text style={styles.pickText}>Vyfotit</Text>
               </Pressable>
-              <Pressable onPress={() => pick(false)} style={({ pressed }) => [styles.pickSmall, pressed && { transform: [{ scale: 0.97 }] }]}>
+              <Pressable
+                onPress={() => pick(false)}
+                style={({ pressed }) => [styles.pickSmall, pressed && { transform: [{ scale: 0.97 }] }]}
+              >
                 <Ionicons name="images" size={26} color={colors.white} />
                 <Text style={[styles.pickText, { color: colors.white }]}>Z galerie</Text>
               </Pressable>
@@ -159,7 +168,9 @@ export default function DiagnoseScreen() {
                 <Chip label="Nevím" icon="help" selected={!plantId} onPress={() => setPlantId(undefined)} />
                 {myPlantIds.map((id) => {
                   const p = getPlant(id);
-                  return p ? <Chip key={id} label={`${p.emoji} ${p.name}`} selected={plantId === id} onPress={() => setPlantId(id)} /> : null;
+                  return p ? (
+                    <Chip key={id} label={`${p.emoji} ${p.name}`} selected={plantId === id} onPress={() => setPlantId(id)} />
+                  ) : null;
                 })}
               </View>
             </>
@@ -175,7 +186,13 @@ export default function DiagnoseScreen() {
                 multiline
                 style={{ marginTop: 14 }}
               />
-              <Button title={loading ? 'Prohlížím fotku…' : 'Zjistit, co jí je'} icon="sparkles" onPress={analyze} loading={loading} style={{ marginTop: 14 }} />
+              <Button
+                title={loading ? 'Prohlížím fotku…' : 'Zjistit, co jí je'}
+                icon="sparkles"
+                onPress={analyze}
+                loading={loading}
+                style={{ marginTop: 14 }}
+              />
               {loading && (
                 <T v="small" style={{ textAlign: 'center', marginTop: 8 }}>
                   Může to trvat pár desítek sekund.
@@ -248,12 +265,21 @@ function Section({ title, icon, color, items }: { title: string; icon: IconName;
 }
 
 const styles = StyleSheet.create({
-  hero: { paddingHorizontal: 20, paddingBottom: 28, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 },
+  hero: { marginHorizontal: 16, padding: 20, borderRadius: 30, borderWidth: 1, borderColor: 'rgba(255,255,255,0.35)' },
   pickRow: { flexDirection: 'row', gap: 12, marginTop: 20 },
   pickBig: { flex: 1.4, backgroundColor: colors.white, borderRadius: 24, padding: 18, gap: 10 },
   pickIcon: { width: 54, height: 54, borderRadius: 18, backgroundColor: '#EDE6FA', alignItems: 'center', justifyContent: 'center' },
-  pickSmall: { flex: 1, backgroundColor: 'rgba(255,255,255,0.16)', borderRadius: 24, padding: 18, gap: 10, justifyContent: 'flex-end' },
-  pickText: { fontFamily: fonts.bold, fontSize: 17, color: colors.text },
+  pickSmall: {
+    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.35)',
+    borderRadius: 24,
+    padding: 18,
+    gap: 10,
+    justifyContent: 'flex-end',
+  },
+  pickText: { ...font.bold, fontSize: 17, color: colors.text },
   body: { paddingHorizontal: 16, paddingTop: 16 },
   wrap: { flexDirection: 'row', flexWrap: 'wrap' },
   photoWrap: { borderRadius: 28, overflow: 'hidden', backgroundColor: colors.border },
@@ -281,10 +307,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 7,
   },
-  photoRetakeText: { color: colors.white, fontFamily: fonts.semibold, fontSize: 13 },
+  photoRetakeText: { color: colors.white, ...font.semibold, fontSize: 13 },
   confRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 10 },
   confSeg: { width: 28, height: 6, borderRadius: 3 },
-  confText: { fontFamily: fonts.bold, fontSize: 12, marginLeft: 6 },
+  confText: { ...font.bold, fontSize: 12, marginLeft: 6 },
   item: { flexDirection: 'row', gap: 10, marginTop: 6 },
   bullet: { width: 6, height: 6, borderRadius: 3, marginTop: 8 },
 });

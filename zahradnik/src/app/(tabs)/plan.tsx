@@ -1,13 +1,12 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PlantPin } from '../../components/PlantPin';
 import { MapMarker, MapPolygon, MapViewState, SatelliteMap } from '../../components/SatelliteMap';
-import { Avatar, Button, colors, fonts, haptic, IconButton, Pill, shadow, T } from '../../components/ui';
+import { Avatar, Button, colors, Glass, font, haptic, IconButton, Pill, shadow, T } from '../../components/ui';
 import { getPlant } from '../../data/plants';
 import { confirmAsk } from '../../lib/dialog';
 import { centroid, fitZoom, formatArea, googleMapsUrl, polygonArea } from '../../lib/geo';
@@ -22,7 +21,9 @@ export default function PlanScreen() {
   const params = useLocalSearchParams<{ place?: string }>();
   const { garden, updateGarden, updatePlant } = useStore();
   const { byUid } = useAdvice();
-  const [size, setSize] = useState({ w: 0, h: 0 });
+  // Plán zabírá celou obrazovku – rozměr okna je spolehlivější než onLayout (na webu se u skrytých záložek nemusí ozvat).
+  const window = useWindowDimensions();
+  const size = { w: window.width, h: window.height };
   const [view, setView] = useState<MapViewState | null>(null);
   const [mode, setMode] = useState<Mode>({ kind: 'idle' });
   const [selected, setSelected] = useState<string | null>(null);
@@ -61,18 +62,27 @@ export default function PlanScreen() {
 
   if (!garden.location) {
     return (
-      <LinearGradient colors={['#0F3323', '#1F6644', '#3A9A63']} style={[styles.empty, { paddingTop: insets.top + 40 }]}>
-        <Animated.View entering={FadeInDown} style={{ alignItems: 'center' }}>
-          <Text style={{ fontSize: 72 }}>🗺️</Text>
-          <T v="h1" color={colors.white} style={{ textAlign: 'center', marginTop: 16 }}>
-            Tvoje zahrada ze satelitu
-          </T>
-          <T v="body" color="rgba(255,255,255,0.85)" style={{ textAlign: 'center', marginTop: 8, maxWidth: 320 }}>
-            Najdi ji podle adresy, obkresli hranice a označ, kde ti co roste. Každý den uvidíš, co potřebuje vodu.
-          </T>
-          <Button title="Najít moji zahradu" icon="search" variant="soft" onPress={() => router.push('/poloha')} style={{ marginTop: 24, minWidth: 240 }} />
+      <View style={[styles.empty, { paddingTop: insets.top + 60 }]}>
+        <Animated.View entering={FadeInDown} style={{ width: '100%', maxWidth: 420 }}>
+          <Glass radius={32} intensity={50} style={shadow.md}>
+            <View style={{ alignItems: 'center', padding: 28 }}>
+              <Text style={{ fontSize: 72 }}>🗺️</Text>
+              <T v="h1" style={{ textAlign: 'center', marginTop: 16 }}>
+                Tvoje zahrada ze satelitu
+              </T>
+              <T v="body" color={colors.muted} style={{ textAlign: 'center', marginTop: 8, maxWidth: 320 }}>
+                Najdi ji podle adresy, obkresli hranice a označ, kde ti co roste. Každý den uvidíš, co potřebuje vodu.
+              </T>
+              <Button
+                title="Najít moji zahradu"
+                icon="search"
+                onPress={() => router.push('/poloha')}
+                style={{ marginTop: 24, minWidth: 240 }}
+              />
+            </View>
+          </Glass>
         </Animated.View>
-      </LinearGradient>
+      </View>
     );
   }
 
@@ -146,10 +156,13 @@ export default function PlanScreen() {
       height: isSel ? 76 : 44,
       anchor: 'center',
       node: <PlantPin emoji={plant?.emoji ?? '🌱'} color={v.color} selected={isSel} label={isSel ? plant?.name : undefined} />,
-      onPress: drawing || mode.kind === 'place' ? undefined : () => {
-        haptic();
-        setSelected(p.uid);
-      },
+      onPress:
+        drawing || mode.kind === 'place'
+          ? undefined
+          : () => {
+              haptic();
+              setSelected(p.uid);
+            },
     };
   });
 
@@ -160,7 +173,7 @@ export default function PlanScreen() {
   }, {});
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#243328' }} onLayout={(e) => setSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
+    <View style={{ flex: 1, backgroundColor: '#243328' }}>
       {view && (
         <SatelliteMap
           view={view}
@@ -177,133 +190,186 @@ export default function PlanScreen() {
 
       {/* ── Horní lišta ── */}
       <View style={[styles.top, { paddingTop: insets.top + 10 }]} pointerEvents="box-none">
-        <View style={[styles.titleCard, shadow.md]}>
-          <T v="h3" numberOfLines={1}>
-            {garden.name}
-          </T>
-          <T v="small" numberOfLines={1}>
-            {garden.outline ? `${formatArea(polygonArea(garden.outline))} · ` : ''}
-            {garden.location.label}
-          </T>
-        </View>
+        <Glass radius={22} intensity={60} style={[styles.titleCard, shadow.md]}>
+          <View style={{ paddingHorizontal: 16, paddingVertical: 10 }}>
+            <T v="h3" numberOfLines={1}>
+              {garden.name}
+            </T>
+            <T v="small" numberOfLines={1}>
+              {garden.outline ? `${formatArea(polygonArea(garden.outline))} · ` : ''}
+              {garden.location.label}
+            </T>
+          </View>
+        </Glass>
         <IconButton icon="search" tone="glass" onPress={() => router.push('/poloha')} label="Změnit polohu" />
-        <IconButton icon="logo-google" tone="glass" onPress={() => Linking.openURL(googleMapsUrl(view?.center ?? garden.location!))} label="Otevřít v Google Maps" />
+        <IconButton
+          icon="logo-google"
+          tone="glass"
+          onPress={() => Linking.openURL(googleMapsUrl(view?.center ?? garden.location!))}
+          label="Otevřít v Google Maps"
+        />
       </View>
 
       {/* ── Zoom ── */}
       <View style={[styles.zoom, { top: insets.top + 110 }]} pointerEvents="box-none">
-        <IconButton icon="add" tone="glass" size={42} onPress={() => view && setView({ ...view, zoom: Math.min(21.5, view.zoom + 1) })} label="Přiblížit" />
-        <IconButton icon="remove" tone="glass" size={42} onPress={() => view && setView({ ...view, zoom: Math.max(4, view.zoom - 1) })} label="Oddálit" />
+        <IconButton
+          icon="add"
+          tone="glass"
+          size={42}
+          onPress={() => view && setView({ ...view, zoom: Math.min(21.5, view.zoom + 1) })}
+          label="Přiblížit"
+        />
+        <IconButton
+          icon="remove"
+          tone="glass"
+          size={42}
+          onPress={() => view && setView({ ...view, zoom: Math.max(4, view.zoom - 1) })}
+          label="Oddálit"
+        />
         <IconButton icon="scan" tone="glass" size={42} onPress={fitAll} label="Zobrazit celou zahradu" />
       </View>
 
       {/* ── Spodní panel ── */}
       <Animated.View entering={FadeInUp} style={[styles.panel, shadow.lg, { bottom: Math.max(insets.bottom, 12) + 76 }]}>
-        {drawing ? (
-          <View>
-            <View style={styles.rowBetween}>
-              <View style={{ flex: 1 }}>
-                <T v="caption" color={colors.primaryBright}>
-                  {mode.kind === 'outline' ? 'Hranice zahrady' : `Záhon · ${targetPlant?.name ?? ''}`}
-                </T>
-                <T v="h2">{draft.length < 3 ? 'Klepej na rohy na mapě' : formatArea(draftArea)}</T>
-                <T v="small">
-                  {draft.length === 0
-                    ? 'Postupně klepni na všechny rohy, mapou můžeš mezitím posouvat.'
-                    : `${draft.length} ${draft.length === 1 ? 'bod' : draft.length < 5 ? 'body' : 'bodů'} · ${draft.length < 3 ? 'ještě ' + (3 - draft.length) + ' a spočítám plochu' : 'plocha se počítá automaticky'}`}
-                </T>
-              </View>
-            </View>
-            <View style={styles.actions}>
-              <Button title="Zpět" icon="arrow-undo" variant="ghost" small disabled={!draft.length} onPress={() => setDraft((d) => d.slice(0, -1))} style={{ flex: 1 }} />
-              <Button title="Zrušit" variant="ghost" small onPress={() => startDraw({ kind: 'idle' })} style={{ flex: 1 }} />
-              <Button title="Uložit" icon="checkmark" small disabled={draft.length < 3} onPress={saveDraw} style={{ flex: 1.2 }} />
-            </View>
-          </View>
-        ) : mode.kind === 'place' ? (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <Avatar emoji={targetPlant?.emoji ?? '🌱'} />
-            <View style={{ flex: 1 }}>
-              <T v="h3">Kde roste {targetPlant?.name.toLowerCase()}?</T>
-              <T v="small">Klepni na místo na mapě.</T>
-            </View>
-            <Button title="Zrušit" variant="ghost" small onPress={() => setMode({ kind: 'idle' })} />
-          </View>
-        ) : selectedGp ? (
-          <SelectedPanel
-            uid={selectedGp.uid}
-            onClose={() => setSelected(null)}
-            onMove={() => {
-              setSelected(null);
-              setMode({ kind: 'place', uid: selectedGp.uid });
-            }}
-            onBed={() => startDraw({ kind: 'bed', uid: selectedGp.uid })}
-            onRemove={async () => {
-              if (await confirmAsk('Odebrat z plánu?', 'Rostlina zůstane v seznamu, jen zmizí z mapy.', 'Odebrat', true)) {
-                updatePlant(selectedGp.uid, { pos: undefined, shape: undefined });
-                setSelected(null);
-              }
-            }}
-          />
-        ) : (
-          <View>
-            {!garden.outline ? (
-              <Pressable style={styles.cta} onPress={() => startDraw({ kind: 'outline' })}>
-                <View style={styles.ctaIcon}>
-                  <Ionicons name="create" size={22} color={colors.white} />
+        <Glass radius={28} intensity={70} style={shadow.lg}>
+          <View style={{ padding: 16 }}>
+            {drawing ? (
+              <View>
+                <View style={styles.rowBetween}>
+                  <View style={{ flex: 1 }}>
+                    <T v="caption" color={colors.primaryBright}>
+                      {mode.kind === 'outline' ? 'Hranice zahrady' : `Záhon · ${targetPlant?.name ?? ''}`}
+                    </T>
+                    <T v="h2">{draft.length < 3 ? 'Klepej na rohy na mapě' : formatArea(draftArea)}</T>
+                    <T v="small">
+                      {draft.length === 0
+                        ? 'Postupně klepni na všechny rohy, mapou můžeš mezitím posouvat.'
+                        : `${draft.length} ${draft.length === 1 ? 'bod' : draft.length < 5 ? 'body' : 'bodů'} · ${draft.length < 3 ? 'ještě ' + (3 - draft.length) + ' a spočítám plochu' : 'plocha se počítá automaticky'}`}
+                    </T>
+                  </View>
                 </View>
+                <View style={styles.actions}>
+                  <Button
+                    title="Zpět"
+                    icon="arrow-undo"
+                    variant="ghost"
+                    small
+                    disabled={!draft.length}
+                    onPress={() => setDraft((d) => d.slice(0, -1))}
+                    style={{ flex: 1 }}
+                  />
+                  <Button title="Zrušit" variant="ghost" small onPress={() => startDraw({ kind: 'idle' })} style={{ flex: 1 }} />
+                  <Button title="Uložit" icon="checkmark" small disabled={draft.length < 3} onPress={saveDraw} style={{ flex: 1.2 }} />
+                </View>
+              </View>
+            ) : mode.kind === 'place' ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <Avatar emoji={targetPlant?.emoji ?? '🌱'} />
                 <View style={{ flex: 1 }}>
-                  <T v="h3">Obkresli svou zahradu</T>
-                  <T v="small">Spočítám přesnou rozlohu.</T>
+                  <T v="h3">Kde roste {targetPlant?.name.toLowerCase()}?</T>
+                  <T v="small">Klepni na místo na mapě.</T>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={colors.muted} />
-              </Pressable>
-            ) : (
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 4 }}>
-                {(['zalij', 'zkontroluj', 'nezalévej', 'zalito', 'odpočívá'] as const)
-                  .filter((k) => counts[k])
-                  .map((k) => (
-                    <Pill key={k} label={`${VERDICT[k].label} ${counts[k]}`} color={VERDICT[k].color} bg={VERDICT[k].soft} icon={VERDICT[k].icon} />
-                  ))}
-                {!plantsOnMap.length && <T v="small">Na mapě zatím nejsou žádné rostliny.</T>}
+                <Button title="Zrušit" variant="ghost" small onPress={() => setMode({ kind: 'idle' })} />
               </View>
-            )}
-
-            {unplaced.length > 0 ? (
-              <>
-                <T v="caption" style={{ marginTop: 12, marginBottom: 8 }}>
-                  Umísti na mapu ({unplaced.length})
-                </T>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  {unplaced.map((p) => {
-                    const plant = getPlant(p.plantId);
-                    return (
-                      <Pressable
-                        key={p.uid}
-                        onPress={() => {
-                          haptic();
-                          setMode({ kind: 'place', uid: p.uid });
-                        }}
-                        style={styles.unplaced}
-                      >
-                        <Text style={{ fontSize: 22 }}>{plant?.emoji}</Text>
-                        <Text style={styles.unplacedText} numberOfLines={1}>
-                          {plant?.name}
-                        </Text>
-                        <Ionicons name="locate" size={16} color={colors.primaryBright} />
-                      </Pressable>
-                    );
-                  })}
-                </ScrollView>
-              </>
+            ) : selectedGp ? (
+              <SelectedPanel
+                uid={selectedGp.uid}
+                onClose={() => setSelected(null)}
+                onMove={() => {
+                  setSelected(null);
+                  setMode({ kind: 'place', uid: selectedGp.uid });
+                }}
+                onBed={() => startDraw({ kind: 'bed', uid: selectedGp.uid })}
+                onRemove={async () => {
+                  if (await confirmAsk('Odebrat z plánu?', 'Rostlina zůstane v seznamu, jen zmizí z mapy.', 'Odebrat', true)) {
+                    updatePlant(selectedGp.uid, { pos: undefined, shape: undefined });
+                    setSelected(null);
+                  }
+                }}
+              />
             ) : (
-              <View style={styles.actions}>
-                {garden.outline && <Button title="Upravit hranice" icon="create-outline" variant="ghost" small onPress={() => startDraw({ kind: 'outline' })} style={{ flex: 1 }} />}
-                <Button title="Přidat rostlinu" icon="add" variant="soft" small onPress={() => router.push('/katalog')} style={{ flex: 1 }} />
+              <View>
+                {!garden.outline ? (
+                  <Pressable style={styles.cta} onPress={() => startDraw({ kind: 'outline' })}>
+                    <View style={styles.ctaIcon}>
+                      <Ionicons name="create" size={22} color={colors.white} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <T v="h3">Obkresli svou zahradu</T>
+                      <T v="small">Spočítám přesnou rozlohu.</T>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color={colors.muted} />
+                  </Pressable>
+                ) : (
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 4 }}>
+                    {(['zalij', 'zkontroluj', 'nezalévej', 'zalito', 'odpočívá'] as const)
+                      .filter((k) => counts[k])
+                      .map((k) => (
+                        <Pill
+                          key={k}
+                          label={`${VERDICT[k].label} ${counts[k]}`}
+                          color={VERDICT[k].color}
+                          bg={VERDICT[k].soft}
+                          icon={VERDICT[k].icon}
+                        />
+                      ))}
+                    {!plantsOnMap.length && <T v="small">Na mapě zatím nejsou žádné rostliny.</T>}
+                  </View>
+                )}
+
+                {unplaced.length > 0 ? (
+                  <>
+                    <T v="caption" style={{ marginTop: 12, marginBottom: 8 }}>
+                      Umísti na mapu ({unplaced.length})
+                    </T>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                      {unplaced.map((p) => {
+                        const plant = getPlant(p.plantId);
+                        return (
+                          <Pressable
+                            key={p.uid}
+                            onPress={() => {
+                              haptic();
+                              setMode({ kind: 'place', uid: p.uid });
+                            }}
+                            style={styles.unplaced}
+                          >
+                            <Text style={{ fontSize: 22 }}>{plant?.emoji}</Text>
+                            <Text style={styles.unplacedText} numberOfLines={1}>
+                              {plant?.name}
+                            </Text>
+                            <Ionicons name="locate" size={16} color={colors.primaryBright} />
+                          </Pressable>
+                        );
+                      })}
+                    </ScrollView>
+                  </>
+                ) : (
+                  <View style={styles.actions}>
+                    {garden.outline && (
+                      <Button
+                        title="Upravit hranice"
+                        icon="create-outline"
+                        variant="ghost"
+                        small
+                        onPress={() => startDraw({ kind: 'outline' })}
+                        style={{ flex: 1 }}
+                      />
+                    )}
+                    <Button
+                      title="Přidat rostlinu"
+                      icon="add"
+                      variant="soft"
+                      small
+                      onPress={() => router.push('/katalog')}
+                      style={{ flex: 1 }}
+                    />
+                  </View>
+                )}
               </View>
             )}
           </View>
-        )}
+        </Glass>
       </Animated.View>
     </View>
   );
@@ -359,7 +425,7 @@ function SelectedPanel({
         <Button title="Záhon" icon="shapes" variant="soft" small onPress={onBed} style={{ flex: 1 }} />
       </View>
       <Pressable onPress={onRemove} style={{ alignSelf: 'center', marginTop: 10 }} hitSlop={8}>
-        <Text style={{ color: colors.danger, fontFamily: fonts.semibold, fontSize: 13 }}>Odebrat z plánu</Text>
+        <Text style={{ color: colors.danger, ...font.semibold, fontSize: 13 }}>Odebrat z plánu</Text>
       </Pressable>
     </Animated.View>
   );
@@ -368,21 +434,12 @@ function SelectedPanel({
 const styles = StyleSheet.create({
   empty: { flex: 1, alignItems: 'center', paddingHorizontal: 24 },
   top: { position: 'absolute', left: 0, right: 0, top: 0, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12 },
-  titleCard: {
-    flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    borderRadius: 22,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
+  titleCard: { flex: 1 },
   zoom: { position: 'absolute', right: 12, gap: 10 },
   panel: {
     position: 'absolute',
     left: 12,
     right: 12,
-    backgroundColor: colors.surface,
-    borderRadius: 28,
-    padding: 16,
     maxWidth: 520,
     alignSelf: 'center',
   },
@@ -401,7 +458,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
     maxWidth: 190,
   },
-  unplacedText: { fontFamily: fonts.semibold, fontSize: 14, color: colors.text },
+  unplacedText: { ...font.semibold, fontSize: 14, color: colors.text },
   verdict: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 14, padding: 10, marginTop: 12 },
-  verdictText: { flex: 1, fontFamily: fonts.semibold, fontSize: 14 },
+  verdictText: { flex: 1, ...font.semibold, fontSize: 14 },
 });

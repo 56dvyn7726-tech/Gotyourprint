@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -8,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { parseNumber, PlacementForm, PlacementValues } from '../components/PlacementForm';
 import { PlantPin } from '../components/PlantPin';
 import { SatelliteMap } from '../components/SatelliteMap';
-import { Banner, Button, Card, colors, fonts, haptic, IconButton, SectionHeader, T } from '../components/ui';
+import { Banner, Button, Card, colors, font, haptic, IconButton, SectionHeader, T } from '../components/ui';
 import { getPlant } from '../data/plants';
 import { confirmAsk } from '../lib/dialog';
 import { centroid, formatArea, polygonArea } from '../lib/geo';
@@ -69,20 +68,15 @@ export default function PlantDetailScreen() {
   return (
     <View style={{ flex: 1 }}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 60 }}>
-        <LinearGradient
-          colors={['#0F3323', '#1F6644', '#3A9A63']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.hero, { paddingTop: insets.top + 40 }]}
-        >
+        <View style={[styles.hero, { paddingTop: insets.top + 40 }]}>
           <Animated.View entering={FadeInDown} style={{ alignItems: 'center' }}>
             <View style={[styles.bigAvatar, { borderColor: v.color }]}>
               <Text style={{ fontSize: 64 }}>{plant.emoji}</Text>
             </View>
-            <T v="h1" color={colors.white} style={{ marginTop: 12 }}>
+            <T v="largeTitle" style={{ marginTop: 14 }}>
               {plant.name}
             </T>
-            <T v="small" color="rgba(255,255,255,0.75)" style={{ fontStyle: 'italic' }}>
+            <T v="small" style={{ fontStyle: 'italic' }}>
               {plant.latin}
               {gp.note ? ` · ${gp.note}` : ''}
             </T>
@@ -93,11 +87,11 @@ export default function PlantDetailScreen() {
               <HeroPill icon="home" text={gp.placement} />
             </View>
           </Animated.View>
-        </LinearGradient>
+        </View>
 
         <View style={styles.body}>
           <Animated.View entering={FadeInDown.delay(80)}>
-            <Card style={{ marginTop: -30 }}>
+            <Card>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <View style={[styles.verdictIcon, { backgroundColor: v.soft }]}>
                   <Ionicons name={v.icon} size={22} color={v.color} />
@@ -228,7 +222,7 @@ export default function PlantDetailScreen() {
 
           <SectionHeader title="Zajímavosti" />
           {plant.facts.map((t) => (
-            <Card key={t} style={{ backgroundColor: '#EFE2F6' }}>
+            <Card key={t} style={{ backgroundColor: colors.purpleSoft }}>
               <View style={{ flexDirection: 'row', gap: 10 }}>
                 <Ionicons name="sparkles" size={20} color="#7A45A0" />
                 <T v="body" style={{ flex: 1 }}>
@@ -280,35 +274,37 @@ function formatIso(iso: string) {
 function HeroPill({ icon, text }: { icon: React.ComponentProps<typeof Ionicons>['name']; text: string }) {
   return (
     <View style={styles.heroPill}>
-      <Ionicons name={icon} size={13} color={colors.white} />
+      <Ionicons name={icon} size={13} color={colors.primary} />
       <Text style={styles.heroPillText}>{text}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  hero: { paddingHorizontal: 20, paddingBottom: 50, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 },
+  hero: { paddingHorizontal: 20, paddingBottom: 18 },
   bigAvatar: {
     width: 116,
     height: 116,
-    borderRadius: 58,
-    backgroundColor: colors.white,
+    borderRadius: 34,
+    backgroundColor: 'rgba(255,255,255,0.75)',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 5,
-    boxShadow: '0 12px 30px rgba(0,0,0,0.25)',
+    borderWidth: 3,
+    boxShadow: '0 16px 40px rgba(20,60,40,0.18)',
   },
   heroPills: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6, marginTop: 14 },
   heroPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: 'rgba(255,255,255,0.16)',
+    backgroundColor: 'rgba(255,255,255,0.6)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.9)',
     borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 11,
+    paddingVertical: 6,
   },
-  heroPillText: { color: colors.white, fontFamily: fonts.semibold, fontSize: 12 },
+  heroPillText: { color: colors.text, ...font.medium, fontSize: 13 },
   body: { paddingHorizontal: 16 },
   verdictIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   map: { height: 180, borderRadius: 24, overflow: 'hidden', marginBottom: 12, backgroundColor: '#243328' },
@@ -317,14 +313,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     borderRadius: 16,
-    backgroundColor: colors.surface,
-    borderWidth: 1.5,
-    borderColor: colors.border,
+    backgroundColor: 'rgba(255,255,255,0.55)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.9)',
     gap: 4,
   },
   monthActive: { backgroundColor: colors.primarySoft, borderColor: colors.primarySoft },
-  monthOn: { backgroundColor: colors.forest, borderColor: colors.forest },
-  monthText: { fontFamily: fonts.bold, fontSize: 13, color: colors.text },
+  monthOn: { backgroundColor: colors.primaryBright, borderColor: colors.primaryBright },
+  monthText: { ...font.bold, fontSize: 13, color: colors.text },
   monthDot: { width: 6, height: 6, borderRadius: 3 },
-  now: { fontFamily: fonts.bold, fontSize: 9, color: colors.primaryBright, textTransform: 'uppercase' },
+  now: { ...font.bold, fontSize: 9, color: colors.primaryBright, textTransform: 'uppercase' },
 });

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { parseNumber, PlacementForm, PlacementValues } from '../../components/PlacementForm';
-import { Button, colors, fonts, Pill, T } from '../../components/ui';
+import { Button, colors, font, Pill, T } from '../../components/ui';
 import { CATEGORY_TINT } from '../../data/categories';
 import { getPlant } from '../../data/plants';
 import { useStore } from '../../lib/store';
@@ -87,5 +87,5 @@ const styles = StyleSheet.create({
   hero: { borderRadius: 28, padding: 20, alignItems: 'center' },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'center', marginTop: 12 },
   water: { flexDirection: 'row', gap: 10, backgroundColor: colors.waterSoft, borderRadius: 18, padding: 14, marginTop: 12 },
-  waterText: { flex: 1, fontFamily: fonts.medium, fontSize: 14, lineHeight: 20, color: colors.text },
+  waterText: { flex: 1, ...font.medium, fontSize: 14, lineHeight: 20, color: colors.text },
 });

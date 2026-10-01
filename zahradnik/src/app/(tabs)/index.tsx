@@ -13,7 +13,9 @@ import {
   Button,
   Card,
   colors,
-  fonts,
+  Glass,
+  shadow,
+  font,
   haptic,
   Pill,
   SectionHeader,
@@ -27,6 +29,15 @@ import { useAdvice, VERDICT } from '../../lib/verdict';
 import { describeWeather } from '../../lib/weather';
 import { dayNumber, fmt1, greeting, plural, shortDay, weatherIcon } from '../../lib/weatherIcon';
 import { DayWeather } from '../../types';
+
+/** Barvy oblohy pro widget s počasím (jako aplikace Počasí v iPhonu). */
+function skyColors(code?: number): [string, string, string] {
+  if (code === undefined) return ['#3E8E6A', '#5FB487', '#8DD3A8'];
+  if (code <= 1) return ['#2F7BD8', '#4FA3EE', '#86C9F7'];
+  if (code <= 3) return ['#5B7FA6', '#7E9DBF', '#A9C0D8'];
+  if (code >= 95) return ['#38405A', '#555F7C', '#7A84A0'];
+  return ['#4A6283', '#6B84A3', '#93A9C2'];
+}
 
 const SEASON_ICON = { jaro: '🌱', léto: '☀️', podzim: '🍂', zima: '❄️' } as const;
 
@@ -67,29 +78,35 @@ export default function TodayScreen() {
 
   return (
     <ScrollView
-      style={{ flex: 1, backgroundColor: colors.bg }}
+      style={{ flex: 1 }}
       contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE }}
-      refreshControl={<RefreshControl refreshing={weatherLoading} onRefresh={() => refreshWeather(true)} tintColor={colors.white} />}
+      refreshControl={<RefreshControl refreshing={weatherLoading} onRefresh={() => refreshWeather(true)} tintColor={colors.primary} />}
     >
-      {/* ── Hlavička s počasím ── */}
-      <LinearGradient colors={['#0F3323', '#1F6644', '#3A9A63']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.hero, { paddingTop: insets.top + 18 }]}>
-        <View style={styles.heroTop}>
-          <View style={{ flex: 1 }}>
-            <T v="small" color="rgba(255,255,255,0.75)">
-              {formatDateCz(now)}
-            </T>
-            <T v="h1" color={colors.white}>
-              {greeting(now)} 👋
-            </T>
-          </View>
-          <Pressable style={styles.placePill} onPress={() => router.push('/poloha')}>
-            <Ionicons name="location" size={14} color={colors.white} />
-            <Text style={styles.placeText} numberOfLines={1}>
-              {garden.location?.label ?? 'Nastavit'}
-            </Text>
-          </Pressable>
+      {/* ── Velký nadpis jako v iOS ── */}
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <View style={{ flex: 1 }}>
+          <T v="caption">{formatDateCz(now)}</T>
+          <T v="largeTitle">{greeting(now)}</T>
         </View>
+        <Pressable onPress={() => router.push('/poloha')}>
+          <Glass radius={999} intensity={50} style={styles.placePill}>
+            <View style={styles.placeInner}>
+              <Ionicons name="location" size={14} color={colors.water} />
+              <Text style={styles.placeText} numberOfLines={1}>
+                {garden.location?.label ?? 'Nastavit'}
+              </Text>
+            </View>
+          </Glass>
+        </Pressable>
+      </View>
 
+      {/* ── Widget s počasím ── */}
+      <LinearGradient
+        colors={skyColors(weather?.current.code)}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0.6, y: 1 }}
+        style={[styles.hero, shadow.md]}
+      >
         <View style={styles.seasonRow}>
           <View style={styles.glassPill}>
             <Text style={styles.glassPillText}>
@@ -104,7 +121,7 @@ export default function TodayScreen() {
         {weather ? (
           <Animated.View entering={FadeIn.duration(500)}>
             <View style={styles.nowRow}>
-              <Ionicons name={weatherIcon(weather.current.code)} size={64} color="#FFE39A" />
+              <Ionicons name={weatherIcon(weather.current.code)} size={58} color="#FFFFFF" />
               <View style={{ marginLeft: 14 }}>
                 <T v="display" color={colors.white}>
                   {Math.round(weather.current.temp)}°
@@ -139,9 +156,9 @@ export default function TodayScreen() {
                   }}
                   style={[styles.fDay, i === day && styles.fDayActive]}
                 >
-                  <Text style={[styles.fName, i === day && { color: colors.forest }]}>{shortDay(d.date, i)}</Text>
-                  <Ionicons name={weatherIcon(d.code)} size={20} color={i === day ? colors.forest : colors.white} />
-                  <Text style={[styles.fTemp, i === day && { color: colors.forest }]}>{Math.round(d.tMax)}°</Text>
+                  <Text style={styles.fName}>{shortDay(d.date, i)}</Text>
+                  <Ionicons name={weatherIcon(d.code)} size={20} color={colors.white} />
+                  <Text style={styles.fTemp}>{Math.round(d.tMax)}°</Text>
                   <View style={styles.rainTrack}>
                     <View style={[styles.rainBar, { height: `${Math.min(100, (d.rain / maxRain) * 100)}%` }]} />
                   </View>
@@ -156,7 +173,14 @@ export default function TodayScreen() {
               {garden.location ? (weatherError ?? 'Načítám počasí…') : 'Nastav polohu zahrady a začnu sledovat počasí.'}
             </T>
             {weatherError && (
-              <Button title="Zkusit znovu" variant="light" small icon="refresh" onPress={() => refreshWeather(true)} style={{ marginTop: 10, alignSelf: 'flex-start' }} />
+              <Button
+                title="Zkusit znovu"
+                variant="light"
+                small
+                icon="refresh"
+                onPress={() => refreshWeather(true)}
+                style={{ marginTop: 10, alignSelf: 'flex-start' }}
+              />
             )}
           </View>
         )}
@@ -165,7 +189,7 @@ export default function TodayScreen() {
       <View style={styles.body}>
         {!garden.location ? (
           <Animated.View entering={FadeInDown.delay(100)}>
-            <Card style={{ marginTop: -28 }}>
+            <Card>
               <Avatar emoji="🗺️" size={56} />
               <T v="h2" style={{ marginTop: 12 }}>
                 Najdi svou zahradu
@@ -178,7 +202,7 @@ export default function TodayScreen() {
           </Animated.View>
         ) : (
           <Animated.View entering={FadeInDown.delay(80)}>
-            <Card style={{ marginTop: -28 }}>
+            <Card>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
                 <ProgressRing done={done} total={needing.length} />
                 <View style={{ flex: 1 }}>
@@ -204,7 +228,13 @@ export default function TodayScreen() {
               {warnings.length > 0 && (
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
                   {warnings.map((w) => (
-                    <Pill key={w} label={w.replace(/^\S+\s/, '')} color="#9A5A06" bg={colors.sunSoft} icon={w.startsWith('🥶') ? 'snow' : w.startsWith('🔥') ? 'flame' : 'warning'} />
+                    <Pill
+                      key={w}
+                      label={w.replace(/^\S+\s/, '')}
+                      color="#9A5A06"
+                      bg={colors.sunSoft}
+                      icon={w.startsWith('🥶') ? 'snow' : w.startsWith('🔥') ? 'flame' : 'warning'}
+                    />
                   ))}
                 </View>
               )}
@@ -219,7 +249,11 @@ export default function TodayScreen() {
           </Animated.View>
         )}
 
-        <SectionHeader title="Rostliny dnes" action={garden.plants.length ? 'Přidat' : undefined} onAction={() => router.push('/katalog')} />
+        <SectionHeader
+          title="Rostliny dnes"
+          action={garden.plants.length ? 'Přidat' : undefined}
+          onAction={() => router.push('/katalog')}
+        />
         {garden.plants.length === 0 ? (
           <Card onPress={() => router.push('/katalog')}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
@@ -288,7 +322,8 @@ function DayDetail({ d, index }: { d: DayWeather; index: number }) {
         {index === 0 ? 'Dnes' : `${shortDay(d.date, index)} ${dayNumber(d.date)}`} · {describeWeather(d.code).text}
       </Text>
       <Text style={styles.dayDetailText}>
-        🌡 {Math.round(d.tMax)}° / {Math.round(d.tMin)}°   💧 {fmt1(d.rain)} mm{d.rainChance !== null ? ` (${d.rainChance} %)` : ''}   ☀️ výpar {fmt1(d.et0)} mm
+        🌡 {Math.round(d.tMax)}° / {Math.round(d.tMin)}° 💧 {fmt1(d.rain)} mm{d.rainChance !== null ? ` (${d.rainChance} %)` : ''} ☀️ výpar{' '}
+        {fmt1(d.et0)} mm
       </Text>
     </View>
   );
@@ -327,7 +362,7 @@ function ProgressRing({ done, total }: { done: number; total: number }) {
         />
       </Svg>
       {total ? (
-        <Text style={{ fontFamily: fonts.extrabold, fontSize: 16, color: colors.text }}>
+        <Text style={{ ...font.extrabold, fontSize: 16, color: colors.text }}>
           {done}/{total}
         </Text>
       ) : (
@@ -360,7 +395,7 @@ function AdviceCard({
             {plant.name}
             {gardenPlant.note ? <T v="small"> · {gardenPlant.note}</T> : null}
           </T>
-          <T v="small" color={v.color} style={{ fontFamily: fonts.semibold }} numberOfLines={open ? undefined : 1}>
+          <T v="small" color={v.color} style={{ ...font.semibold }} numberOfLines={open ? undefined : 1}>
             {advice.headline}
           </T>
         </View>
@@ -387,10 +422,21 @@ function AdviceCard({
               {w.replace(/^\S+\s/, '')}
             </Banner>
           ))}
-          {advice.task && <Banner tone="ok" icon="calendar">{advice.task}</Banner>}
+          {advice.task && (
+            <Banner tone="ok" icon="calendar">
+              {advice.task}
+            </Banner>
+          )}
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
             {canWater && <Button title="Zalito" icon="checkmark" small onPress={onWater} style={{ flex: 1 }} />}
-            <Button title="Detail" icon="arrow-forward" variant="soft" small onPress={() => router.push({ pathname: '/rostlina', params: { uid: gardenPlant.uid } })} style={{ flex: 1 }} />
+            <Button
+              title="Detail"
+              icon="arrow-forward"
+              variant="soft"
+              small
+              onPress={() => router.push({ pathname: '/rostlina', params: { uid: gardenPlant.uid } })}
+              style={{ flex: 1 }}
+            />
           </View>
         </Animated.View>
       )}
@@ -399,40 +445,46 @@ function AdviceCard({
 }
 
 const styles = StyleSheet.create({
-  hero: { paddingHorizontal: 20, paddingBottom: 48, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 },
-  heroTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-  placePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(255,255,255,0.16)',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    maxWidth: 160,
-    marginTop: 4,
-  },
-  placeText: { color: colors.white, fontFamily: fonts.semibold, fontSize: 13 },
-  seasonRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12 },
-  glassPill: { backgroundColor: 'rgba(255,255,255,0.16)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 },
-  glassPillText: { color: colors.white, fontFamily: fonts.bold, fontSize: 13 },
-  seasonNext: { color: 'rgba(255,255,255,0.7)', fontFamily: fonts.medium, fontSize: 13 },
+  header: { flexDirection: 'row', alignItems: 'flex-end', gap: 12, paddingHorizontal: 20, paddingBottom: 14 },
+  hero: { marginHorizontal: 16, padding: 20, borderRadius: 30, borderWidth: 1, borderColor: 'rgba(255,255,255,0.35)', marginBottom: 6 },
+  placePill: { maxWidth: 170, marginBottom: 4 },
+  placeInner: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingVertical: 8 },
+  placeText: { color: colors.text, ...font.semibold, fontSize: 14 },
+  seasonRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  glassPill: { backgroundColor: 'rgba(255,255,255,0.22)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 },
+  glassPillText: { color: colors.white, ...font.bold, fontSize: 13 },
+  seasonNext: { color: 'rgba(255,255,255,0.7)', ...font.medium, fontSize: 13 },
   nowRow: { flexDirection: 'row', alignItems: 'center', marginTop: 18 },
   statsRow: { flexDirection: 'row', gap: 8, marginTop: 18 },
-  stat: { flex: 1, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 18, padding: 12, gap: 2 },
-  statValue: { color: colors.white, fontFamily: fonts.extrabold, fontSize: 16, marginTop: 4 },
-  statLabel: { color: 'rgba(255,255,255,0.7)', fontFamily: fonts.medium, fontSize: 11 },
+  stat: {
+    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderRadius: 18,
+    padding: 12,
+    gap: 2,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
+  },
+  statValue: { color: colors.white, ...font.extrabold, fontSize: 16, marginTop: 4 },
+  statLabel: { color: 'rgba(255,255,255,0.7)', ...font.medium, fontSize: 11 },
   forecast: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 18, gap: 4 },
   fDay: { flex: 1, alignItems: 'center', gap: 4, paddingVertical: 10, borderRadius: 18 },
-  fDayActive: { backgroundColor: 'rgba(255,255,255,0.95)' },
-  fName: { color: 'rgba(255,255,255,0.8)', fontFamily: fonts.bold, fontSize: 12 },
-  fTemp: { color: colors.white, fontFamily: fonts.bold, fontSize: 13 },
-  rainTrack: { width: 6, height: 28, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.18)', justifyContent: 'flex-end', overflow: 'hidden' },
+  fDayActive: { backgroundColor: 'rgba(255,255,255,0.25)' },
+  fName: { color: 'rgba(255,255,255,0.8)', ...font.bold, fontSize: 12 },
+  fTemp: { color: colors.white, ...font.bold, fontSize: 13 },
+  rainTrack: {
+    width: 6,
+    height: 28,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    justifyContent: 'flex-end',
+    overflow: 'hidden',
+  },
   rainBar: { width: 6, backgroundColor: '#8FD0FF', borderRadius: 3 },
-  dayDetail: { marginTop: 10, backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: 16, padding: 12 },
-  dayDetailTitle: { color: colors.white, fontFamily: fonts.bold, fontSize: 14 },
-  dayDetailText: { color: 'rgba(255,255,255,0.85)', fontFamily: fonts.medium, fontSize: 13, marginTop: 4 },
-  body: { paddingHorizontal: 16 },
+  dayDetail: { marginTop: 10, backgroundColor: 'rgba(255,255,255,0.16)', borderRadius: 16, padding: 12 },
+  dayDetailTitle: { color: colors.white, ...font.bold, fontSize: 14 },
+  dayDetailText: { color: 'rgba(255,255,255,0.85)', ...font.medium, fontSize: 13, marginTop: 4 },
+  body: { paddingHorizontal: 16, paddingTop: 12 },
   iconTile: { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   waterBtn: {
     width: 44,

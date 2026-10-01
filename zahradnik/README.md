@@ -25,6 +25,13 @@ Mobilní aplikace pro iOS a Android (Expo / React Native), která ti každý den
 Satelitní snímky jsou z Esri World Imagery a adresy z OpenStreetMap (Nominatim) – obojí zdarma a bez API klíče.
 Přímo Google Maps by vyžadovaly vlastní API klíč s platební kartou, proto je Google jen jako odkaz.
 
+## Vzhled
+
+Design ve stylu iOS: průhledné „skleněné“ panely s rozmazáním (expo-blur, na webu CSS backdrop-filter),
+barevné pozadí, které jimi prosvítá, systémové písmo (SF Pro na iPhonu), barvy systémové palety iOS,
+skleněná plovoucí spodní lišta a widget s počasím podle barvy oblohy. Komponenty jsou v `src/components/ui.tsx`
+(`Glass`, `Backdrop`, `Card`, `Button`…).
+
 ## Spuštění
 
 ```bash
@@ -81,7 +88,7 @@ src/
     rostlina.tsx         detail rostliny (?uid=…), kalendář péče
   components/
     SatelliteMap.tsx     vlastní satelitní mapa (posun, zoom, klepání, kreslení)
-    ui.tsx               designový systém – barvy, písmo, tlačítka, karty
+    ui.tsx               designový systém – sklo, pozadí, barvy, písmo, tlačítka, karty
   data/plants.ts         databáze rostlin
   lib/advice.ts          výpočet zálivky a varování
   lib/geo.ts             projekce mapy, výpočet plochy
