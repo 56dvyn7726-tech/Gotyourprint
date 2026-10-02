@@ -18,8 +18,13 @@ a heslo do správy je `tricka`. Pro ostrý provoz udělejte kroky níže.
 
 1. Na [sheets.new](https://sheets.new) založte novou Google Tabulku (třeba „Objednávky CLS“).
 2. V menu **Rozšíření → Apps Script**.
-3. Smažte ukázkový kód a vložte celý obsah souboru `google-apps-script.gs`.
-4. Na začátku kódu změňte `ADMIN_PASSWORD` na vlastní heslo. Tím heslem se pak přihlásíte do správy.
+3. Skript má dva soubory ve složce `apps-script`:
+   - **Kod**: smažte ukázkový kód v souboru `Kód.gs` a vložte celý obsah `apps-script/Kod.gs`,
+   - **Nastaveni**: vlevo u „Soubory“ klikněte na **+ → Skript**, pojmenujte ho `Nastaveni` a vložte obsah `apps-script/Nastaveni.gs`.
+     Tady vyplníte své údaje.
+
+   Při pozdějších aktualizacích se vyměňuje **jen soubor Kod**, vaše nastavení zůstane.
+4. V souboru Nastaveni změňte `ADMIN_PASSWORD` na vlastní heslo. Tím heslem se pak přihlásíte do správy.
 5. Klikněte na **Nasadit → Nové nasazení**, typ **Webová aplikace**:
    - *Spustit jako:* **Já**
    - *Kdo má přístup:* **Kdokoli**
