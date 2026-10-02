@@ -249,7 +249,7 @@
     <section class="panel" aria-labelledby="formTitle">
       <div class="panel-head">
         <h2 id="formTitle">Vaše objednávka</h2>
-        <p id="savedInfo"></p>
+        <p><span id="savedInfo"></span> <button type="button" class="btn link" id="newOrderBtn" hidden>Nová objednávka</button></p>
       </div>
       <form id="orderForm" novalidate>
         <div class="recap" id="recap"></div>
@@ -746,7 +746,21 @@ function renderSavedInfo() {
   $("savedInfo").textContent = state.submitted ? `Uloženo ${fmtDate(state.submitted)} – můžete ji kdykoli upravit.` : "";
   $("submitBtn").textContent = state.submitted ? "Uložit změny" : "Odeslat objednávku";
   $("cancelOrderBtn").hidden = !state.submitted;
+  $("newOrderBtn").hidden = !state.submitted;
 }
+
+// Vyčistí formulář pro další objednávku (předchozí zůstává uložená u nás, jen se už v tomto prohlížeči neupravuje).
+$("newOrderBtn").addEventListener("click", () => {
+  Object.assign(state, { id: null, submitted: null, items: {}, payment: null });
+  ["fFirst", "fLast", "fPhone", "fEmail", "fUnit", "fNote"].forEach((id) => { $(id).value = ""; $(id).removeAttribute("aria-invalid"); });
+  $("fConsent").checked = false;
+  persistDraft();
+  renderItems();
+  renderSavedInfo();
+  renderPayment();
+  setStatus($("formStatus"), "Formulář je prázdný, můžete vyplnit novou objednávku. Předchozí objednávka zůstává uložená.", "ok");
+  $("pickTitle").scrollIntoView({ behavior: "smooth" });
+});
 
 $("orderForm").addEventListener("input", (e) => {
   if (e.target.getAttribute("aria-invalid") === "true" && e.target.value.trim()) e.target.removeAttribute("aria-invalid");
