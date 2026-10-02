@@ -58,6 +58,16 @@ Běžný účet Gmail zvládne asi **100 e-mailů denně** (s kopií pro vás se
 > Když později kód v Apps Scriptu změníte, nasaďte ho znovu přes **Nasadit → Spravovat nasazení → upravit → Nová verze**.
 > URL zůstane stejná.
 
+### Uzávěrka
+
+Po uzávěrce přepište ve skriptu `ORDERS_OPEN = true` na `false` a nasaďte novou verzi. Stránka pak ukáže
+„Objednávky jsou už uzavřené“ a nové objednávky ani změny nepřijme. Správa objednávek funguje dál.
+
+### Kontrola nastavení
+
+Otevřete adresu skriptu (končí `/exec`) v prohlížeči. Ukáže verzi skriptu a jestli je v pořádku platba,
+e-maily, heslo a jestli jsou objednávky otevřené.
+
 ## 2. Úpravy
 
 Vše je v `index.html` v bloku `CONFIG`:
@@ -74,5 +84,11 @@ Odkaz pak rozešlete lidem. Do stávajícího webu stránku vložíte přes `<if
 
 ## Bezpečnost
 
-Heslo se kontroluje na straně Googlu. Seznam objednávek tak bez hesla nikdo nestáhne,
-ani když si prohlédne kód stránky. Heslo je uložené jen ve vašem Apps Scriptu. Do `index.html` ho nepište.
+- Heslo do správy se kontroluje u Googlu, v kódu stránky ani na GitHubu není. Musí mít aspoň 8 znaků
+  a nesmí zůstat výchozí, jinak je správa zablokovaná. Po 10 špatných pokusech se správa na 15 minut zamkne.
+- Ochrana proti zneužití: nejvýš 5 nových objednávek na jeden e-mail a 300 celkem za 6 hodin,
+  skryté pole proti robotům. Limity jdou změnit na začátku skriptu (`LIMIT_…`).
+- Skript přijme jen trička z nabídky (`CATALOG`, `COLORS`) a cenu počítá sám, nevěří ceně ze stránky.
+- Text, který by tabulka nebo Excel spustily jako vzorec, se ukládá jako obyčejný text.
+- Zákazník musí zaškrtnout souhlas se zpracováním údajů. Po vyřízení objednávek data z tabulky smažte.
+- Google Tabulku nesdílejte s nikým, kdo k objednávkám nemá mít přístup.

@@ -156,6 +156,11 @@
   .order-head span { color: var(--muted); font-size: 0.85rem; }
   .order-head .del { margin-left: auto; }
   .order-price { color: var(--text) !important; font-weight: 700; }
+  .consent { display: flex; gap: 10px; align-items: flex-start; font-weight: 400; font-size: 0.85rem; color: var(--muted); }
+  .consent input { width: auto; margin-top: 3px; accent-color: var(--gold); }
+  .consent:has(input[aria-invalid="true"]) span { color: var(--err); }
+  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  .banner.closed { border-style: solid; font-weight: 700; font-size: 1rem; }
   .pay { border: 2px solid var(--gold); border-radius: 12px; padding: 16px; display: flex; flex-wrap: wrap; gap: 16px 24px; align-items: flex-start; }
   .pay-info { flex: 1 1 260px; display: grid; gap: 10px; }
   .pay-info h3 { color: var(--gold); font-size: 1.7rem; }
@@ -213,6 +218,8 @@
     <p class="deadline" id="deadline" hidden></p>
   </header>
 
+  <p class="banner closed" id="closedBanner" hidden>Objednávky jsou už uzavřené. Děkujeme všem, kdo objednali.</p>
+
   <p class="banner" id="demoBanner" hidden>
     Ukázkový režim: objednávky se ukládají jen v tomto prohlížeči. Heslo do správy objednávek je <b id="demoPass"></b>.
   </p>
@@ -262,6 +269,14 @@
         <label for="fNote">Poznámka
           <textarea id="fNote" name="note" rows="2" maxlength="500" placeholder="např. útvar, kdy si tričko vyzvednete…"></textarea>
         </label>
+        <label class="consent" for="fConsent">
+          <input type="checkbox" id="fConsent" required>
+          <span>Souhlasím se zpracováním jména, telefonu a e-mailu pro vyřízení této objednávky (údaje nikomu dalšímu nepředáváme a po vyřízení objednávky je smažeme). *</span>
+        </label>
+        <div class="hp" aria-hidden="true">
+          <label for="fWebsite">Web</label>
+          <input id="fWebsite" name="website" tabindex="-1" autocomplete="off">
+        </div>
         <div class="actions">
           <button type="submit" class="btn primary" id="submitBtn">Odeslat objednávku</button>
           <button type="button" class="btn link" id="cancelOrderBtn" hidden>Zrušit moji objednávku</button>
@@ -560,6 +575,7 @@ function persistDraft() {
     phone: $("fPhone").value,
     email: $("fEmail").value,
     note: $("fNote").value,
+    consent: $("fConsent").checked,
   });
 }
 
@@ -700,6 +716,20 @@ function orderedEntries(items) {
 
 /* ---------- Odeslání objednávky ---------- */
 
+const ERRORS = {
+  paid: "Tato objednávka je už zaplacená, proto ji nejde změnit ani zrušit. Kontaktujte nás prosím.",
+  closed: "Objednávky jsou už uzavřené, změny nejde uložit.",
+  rate_limited: "Příliš mnoho pokusů v krátké době. Zkuste to prosím později nebo nás kontaktujte.",
+  bad_items: "Některé vybrané tričko už není v nabídce. Obnovte prosím stránku a vyberte znovu.",
+  busy: "Server je právě vytížený, zkuste to prosím za chvíli znovu.",
+};
+
+function showClosed() {
+  $("closedBanner").hidden = false;
+  $("submitBtn").disabled = true;
+  $("cancelOrderBtn").hidden = true;
+}
+
 function setStatus(el, text, kind) { el.textContent = text; el.className = "status" + (kind ? " " + kind : ""); }
 
 function renderSavedInfo() {
@@ -731,6 +761,7 @@ $("orderForm").addEventListener("submit", async (e) => {
     ["fLast", last, "příjmení"],
     ["fPhone", phoneOk, phone ? "správné telefonní číslo (aspoň 9 číslic)" : "telefon"],
     ["fEmail", emailOk, email ? "správný e-mail (např. jan.novak@email.cz)" : "e-mail"],
+    ["fConsent", $("fConsent").checked, "souhlas se zpracováním údajů (zaškrtněte políčko)"],
   ].filter(([id, ok]) => { $(id).setAttribute("aria-invalid", String(!ok)); return !ok; });
   if (missing.length) {
     $(missing[0][0]).focus();
@@ -744,7 +775,7 @@ $("orderForm").addEventListener("submit", async (e) => {
   setStatus(status, "Ukládám…");
   if (!state.id) state.id = newId();
   try {
-    const res = await api.save({ id: state.id, name, phone, email, note: $("fNote").value.trim(), items: state.items, price: orderPrice(state.items) });
+    const res = await api.save({ id: state.id, name, phone, email, note: $("fNote").value.trim(), items: state.items, website: $("fWebsite").value });
     state.submitted = res.updated || new Date().toISOString();
     state.payment = res.payment || null;
     persistDraft();
@@ -753,11 +784,11 @@ $("orderForm").addEventListener("submit", async (e) => {
     const mailNote = res.emailSent ? ` Potvrzení jsme poslali na ${email}.`
       : !CONFIG.scriptUrl ? " (V ukázkovém režimu se potvrzovací e-mail neposílá.)" : "";
     const payNote = state.payment ? " Níže najdete údaje k platbě." : "";
-    setStatus(status, `Hotovo! Objednávka (${totalPieces(state.items)} ks, ${kc(orderPrice(state.items))}) je uložená. Děkujeme.${mailNote}${payNote}`, "ok");
+    const amount = state.payment ? state.payment.amount : orderPrice(state.items);
+    setStatus(status, `Hotovo! Objednávka (${totalPieces(state.items)} ks, ${kc(amount)}) je uložená. Děkujeme.${mailNote}${payNote}`, "ok");
   } catch (err) {
-    setStatus(status, err.message === "paid"
-      ? "Tato objednávka je už zaplacená, proto ji nejde změnit. Pro úpravu nás prosím kontaktujte."
-      : "Objednávku se nepodařilo uložit. Zkontrolujte připojení k internetu a zkuste to znovu.", "err");
+    setStatus(status, ERRORS[err.message] || "Objednávku se nepodařilo uložit. Zkontrolujte připojení k internetu a zkuste to znovu.", "err");
+    if (err.message === "closed") showClosed();
   } finally {
     btn.disabled = false;
   }
@@ -780,9 +811,7 @@ $("cancelYes").addEventListener("click", async () => {
     setStatus($("formStatus"), "Objednávka byla zrušena.", "ok");
   } catch (err) {
     $("cancelOrderBtn").hidden = false;
-    setStatus($("formStatus"), err.message === "paid"
-      ? "Tato objednávka je už zaplacená, proto ji nejde zrušit. Kontaktujte nás prosím."
-      : "Zrušení se nepodařilo, zkuste to prosím znovu.", "err");
+    setStatus($("formStatus"), ERRORS[err.message] || "Zrušení se nepodařilo, zkuste to prosím znovu.", "err");
   }
 });
 
@@ -837,7 +866,11 @@ async function loadOrders() {
     try { sessionStorage.removeItem("gyp-admin"); } catch { /* nic */ }
     $("adminLogin").hidden = false;
     $("adminData").hidden = true;
-    setStatus(status, err.message === "bad_password" ? "Nesprávné heslo." : "Objednávky se nepodařilo načíst. Zkuste to znovu.", "err");
+    setStatus(status, {
+      bad_password: "Nesprávné heslo.",
+      locked: "Příliš mnoho špatných pokusů. Správa je na 15 minut zamčená.",
+      default_password: "Ve skriptu Google není nastavené vlastní heslo (ADMIN_PASSWORD, aspoň 8 znaků). Do té doby je správa zablokovaná.",
+    }[err.message] || "Objednávky se nepodařilo načíst. Zkuste to znovu.", "err");
   }
 }
 $("refreshBtn").addEventListener("click", loadOrders);
@@ -977,7 +1010,8 @@ $("copyBtn").addEventListener("click", async () => {
 $("csvBtn").addEventListener("click", () => {
   const orders = [...adminOrders].sort((a, b) => String(a.created).localeCompare(String(b.created)));
   const keys = combos().map((x) => x.key);
-  const cell = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  // text začínající = + - @ by Excel spustil jako vzorec
+  const cell = (v) => `"${String(v ?? "").replace(/^[=+\-@]/, "'$&").replace(/"/g, '""')}"`;
   const rows = [["VS", "Jméno", "Telefon", "E-mail", "Poznámka", "Datum", ...keys, "Kusů", "Cena (Kč)", "Zaplaceno"].map(cell).join(";")];
   orders.forEach((o) => rows.push([o.vs, o.name, o.phone || o.contact, o.email, o.note, fmtDate(o.updated || o.created),
     ...keys.map((k) => o.items?.[k] || 0), totalPieces(o.items || {}), orderPrice(o.items || {}), o.paid ? fmtDate(o.paid) : "ne"].map(cell).join(";")));
@@ -1004,11 +1038,17 @@ if (saved) {
   $("fPhone").value = saved.phone || "";
   $("fEmail").value = saved.email || "";
   $("fNote").value = saved.note || "";
+  $("fConsent").checked = !!saved.consent;
 }
 renderItems();
 renderSavedInfo();
 renderPayment();
 if (location.hash === "#sprava") showAdmin(true);
+
+// Jsou objednávky otevřené? (nastavuje se ve skriptu Google)
+if (CONFIG.scriptUrl) {
+  fetch(CONFIG.scriptUrl).then((r) => r.json()).then((d) => { if (d && d.open === false) showClosed(); }).catch(() => {});
+}
 </script>
 </body>
 </html>

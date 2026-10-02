@@ -3,8 +3,12 @@
  * Postup nasazení je v souboru NAVOD.md.
  */
 
-// ZMĚŇTE! Tímto heslem se přihlásíte do "Správy objednávek".
+// ZMĚŇTE! Tímto heslem se přihlásíte do "Správy objednávek". Aspoň 8 znaků, nepoužívejte heslo od e-mailu.
+// Dokud tu zůstane výchozí nebo krátké heslo, správa objednávek se neotevře.
 const ADMIN_PASSWORD = 'ZMENTE-TOTO-HESLO';
+
+// Přijímání objednávek: po uzávěrce přepište na false (a nasaďte novou verzi).
+const ORDERS_OPEN = true;
 
 // ---- Platba převodem ----
 const BANK_ACCOUNT = '';                     // číslo účtu, např. '123456789/0100', '19-123456789/0800' nebo IBAN 'CZ65 0800 …' (prázdné = platbu nezobrazovat)
@@ -23,15 +27,26 @@ const EMAIL_INFO = [
   // 'Trička budou k vyzvednutí přibližně 3 týdny po uzávěrce objednávek.',
 ];
 
-// Ceny za kus podle střihu (první slovo položky, např. "FIT Černá M")
-const PRICES = { FIT: 479, EVERYDAY: 479 };
+// Nabídka: ceny za kus, barvy a velikosti podle střihu. Musí odpovídat stránce.
+const CATALOG = {
+  FIT:      { price: 479, sizes: ['S', 'M', 'L', 'XL', '2XL'] },
+  EVERYDAY: { price: 479, sizes: ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'] },
+};
+const COLORS = ['Černá', 'Oliva'];
+const PRICES = {};
+Object.keys(CATALOG).forEach(function (k) { PRICES[k] = CATALOG[k].price; });
+
+// Ochrana proti zneužití (za 6 hodin)
+const LIMIT_NEW_PER_EMAIL = 5;     // nových objednávek na jeden e-mail
+const LIMIT_NEW_TOTAL = 300;       // nových objednávek celkem
+const LIMIT_SAVES_PER_ORDER = 30;  // úprav jedné objednávky
 
 const SHEET_NAME = 'Objednávky';
 const HEADER = ['ID', 'VS', 'Vytvořeno', 'Upraveno', 'Jméno', 'Telefon', 'E-mail', 'Poznámka', 'Položky', 'Kusů', 'Cena (Kč)', 'Zaplaceno', 'Data (nemazat)'];
 // pořadí sloupců (od 0)
 const COL = { id: 0, vs: 1, created: 2, updated: 3, name: 4, phone: 5, email: 6, note: 7, itemsText: 8, count: 9, price: 10, paid: 11, data: 12 };
 
-const SCRIPT_VERSION = 3;
+const SCRIPT_VERSION = 4;
 
 // Otevřete adresu skriptu v prohlížeči: ukáže, jestli je vše nastavené.
 function doGet() {
@@ -43,8 +58,10 @@ function doGet() {
     platba: !BANK_ACCOUNT ? 'VYPNUTÁ – ve skriptu není vyplněný BANK_ACCOUNT'
       : iban ? 'OK – účet ' + BANK_ACCOUNT + ' (IBAN ' + iban + ')'
       : 'CHYBA – číslo účtu "' + BANK_ACCOUNT + '" má špatný tvar, správně např. 123456789/0100',
-    emaily: SEND_CONFIRMATION ? 'zapnuté' : 'vypnuté',
-    heslo: ADMIN_PASSWORD === 'ZMENTE-TOTO-HESLO' ? 'POZOR – heslo do správy není změněné' : 'nastavené',
+    emaily: SEND_CONFIRMATION ? 'zapnuté' + (PAGE_URL ? '' : ' (POZOR – chybí PAGE_URL)') : 'vypnuté',
+    heslo: passwordOk() ? 'nastavené' : 'POZOR – změňte ADMIN_PASSWORD (aspoň 8 znaků), do té doby je správa zablokovaná',
+    objednavky: ORDERS_OPEN ? 'otevřené' : 'UZAVŘENÉ',
+    open: ORDERS_OPEN,
   });
 }
 
@@ -57,32 +74,62 @@ function doPost(e) {
   }
 
   const lock = LockService.getScriptLock();
-  lock.waitLock(15000);
+  if (!lock.tryLock(20000)) return out({ ok: false, error: 'busy' });
   try {
     switch (req.action) {
       case 'save':
+        if (!ORDERS_OPEN) return out({ ok: false, error: 'closed' });
         return out(saveOrder(req.order));
       case 'cancel': {
+        if (!ORDERS_OPEN) return out({ ok: false, error: 'closed' });
         const removed = removeOrder(req.id, false);
         if (removed) sendMail('cancel', removed);
         return out({ ok: true });
       }
       case 'list':
       case 'delete':
-      case 'setPaid':
-        if (req.password !== ADMIN_PASSWORD) return out({ ok: false, error: 'bad_password' });
+      case 'setPaid': {
+        const denied = checkAdmin(req.password);
+        if (denied) return out({ ok: false, error: denied });
         if (req.action === 'delete') removeOrder(req.id, true);
         if (req.action === 'setPaid') setPaid(req.id, !!req.paid);
         return out({ ok: true, orders: listOrders() });
+      }
       default:
         return out({ ok: false, error: 'unknown_action' });
     }
   } catch (err) {
-    const code = String(err.message) === 'paid' ? 'paid' : 'invalid';
+    const known = ['paid', 'rate_limited', 'bad_items'];
+    const code = known.indexOf(String(err.message)) >= 0 ? String(err.message) : 'invalid';
     return out({ ok: false, error: code, message: String(err) });
   } finally {
     lock.releaseLock();
   }
+}
+
+function passwordOk() {
+  return ADMIN_PASSWORD !== 'ZMENTE-TOTO-HESLO' && String(ADMIN_PASSWORD).length >= 8;
+}
+
+// Vrací kód chyby, nebo '' když je heslo správné. Po 10 špatných pokusech se správa na 15 minut zamkne.
+function checkAdmin(password) {
+  if (!passwordOk()) return 'default_password';
+  const cache = CacheService.getScriptCache();
+  const fails = Number(cache.get('adminFails') || 0);
+  if (fails >= 10) return 'locked';
+  if (password !== ADMIN_PASSWORD) {
+    cache.put('adminFails', String(fails + 1), 900);
+    return 'bad_password';
+  }
+  return '';
+}
+
+// Počítadlo v mezipaměti; vyhodí 'rate_limited' po překročení limitu (okno 6 hodin).
+function bump(key, limit) {
+  const cache = CacheService.getScriptCache();
+  const n = Number(cache.get(key) || 0) + 1;
+  if (n > limit) throw new Error('rate_limited');
+  cache.put(key, String(n), 21600);
 }
 
 function out(obj) {
@@ -92,6 +139,14 @@ function out(obj) {
 function getSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sh = ss.getSheetByName(SHEET_NAME);
+  // list ze starší verze skriptu (jiné sloupce) odložíme, aby se data nepomíchala
+  if (sh && sh.getLastRow() > 0) {
+    const head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
+    if (head.join('|') !== HEADER.join('|')) {
+      sh.setName(SHEET_NAME + ' (stará verze ' + Utilities.formatDate(new Date(), 'Europe/Prague', 'd.M. H.mm') + ')');
+      sh = null;
+    }
+  }
   if (!sh) {
     sh = ss.insertSheet(SHEET_NAME);
     sh.appendRow(HEADER);
@@ -133,16 +188,23 @@ function validId(id) {
 
 function saveOrder(o) {
   if (!o || !validId(o.id)) throw new Error('bad id');
+  if (o.website) throw new Error('bot'); // skryté pole, vyplňují ho jen roboti
   const name = safe(o.name, 100);
   const phone = safe(o.phone, 30);
   const email = safe(o.email, 120);
   if (!name || !phone || !email) throw new Error('missing name/phone/email');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) throw new Error('bad email');
 
+  // jen položky z nabídky, např. "FIT Černá M"
   const items = {};
   let count = 0;
   Object.keys(o.items || {}).slice(0, 50).forEach(function (k) {
     const q = Math.floor(Number(o.items[k]));
-    if (k.length <= 40 && q > 0 && q <= 99) {
+    const p = String(k).split(' ');
+    const cut = CATALOG[p[0]];
+    const valid = p.length === 3 && cut && COLORS.indexOf(p[1]) >= 0 && cut.sizes.indexOf(p[2]) >= 0;
+    if (!valid && q > 0) throw new Error('bad_items');
+    if (valid && q > 0 && q <= 99) {
       items[k] = q;
       count += q;
     }
@@ -150,12 +212,18 @@ function saveOrder(o) {
   if (!count) throw new Error('no items');
   const price = orderPrice(items);
 
-  const itemsText = Object.keys(items).map(function (k) { return k + ' ×' + items[k]; }).join(', ');
+  const itemsText = safe(Object.keys(items).map(function (k) { return k + ' ×' + items[k]; }).join(', '), 1000);
   const sh = getSheet();
   const now = new Date();
   const rowNum = findRow(sh, o.id);
   const old = rowNum > 0 ? sh.getRange(rowNum, 1, 1, HEADER.length).getValues()[0] : null;
   if (old && old[COL.paid]) throw new Error('paid'); // zaplacenou objednávku už zákazník nemění
+
+  bump('save:' + o.id, LIMIT_SAVES_PER_ORDER);
+  if (!old) {
+    bump('new:' + email.toLowerCase(), LIMIT_NEW_PER_EMAIL);
+    bump('new:all', LIMIT_NEW_TOTAL);
+  }
 
   const vs = old ? old[COL.vs] : nextVs(sh);
   const row = [];
