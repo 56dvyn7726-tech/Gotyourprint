@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "Zahradník",
+    "slug": "zahradnik",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "cz.gotyourprint.zahradnik"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E3F0DF",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "cz.gotyourprint.zahradnik"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "scheme": "zahradnik",
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Poloha zahrady slouží k načtení místního počasí a srážek."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Fotoaparát slouží k vyfocení nemocné rostliny pro diagnózu.",
+          "photosPermission": "Z galerie můžeš vybrat fotku rostliny pro diagnózu."
+        }
+      ],
+      "expo-notifications"
+    ]
+  }
+}
