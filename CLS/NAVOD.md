@@ -1,7 +1,7 @@
 # Objednávka triček – návod
 
 Stránka `index.html` v této složce slouží k hromadné objednávce triček s daným potiskem.
-Zákazník vybere střih (FIT nebo EVERYDAY), barvu, velikost a počet kusů, vidí tabulku rozměrů a vyplní jméno, příjmení, telefon a e-mail.
+Zákazník vybere střih (FIT nebo EVERYDAY), barvu, velikost a počet kusů, vidí tabulku rozměrů a vyplní jméno, příjmení, telefon, e-mail a domovský útvar (tam se trička doručí).
 Stránka si jeho volby pamatuje, takže když se na odkaz vrátí, může objednávku upravit nebo zrušit.
 
 Vy pod odkazem **Správa objednávek** (dole na stránce, nebo adresa končící `#sprava`) zadáte heslo a uvidíte:
@@ -60,7 +60,8 @@ Běžný účet Gmail zvládne asi **100 e-mailů denně** (s kopií pro vás se
 
 ### Uzávěrka
 
-Po uzávěrce přepište ve skriptu `ORDERS_OPEN = true` na `false` a nasaďte novou verzi. Stránka pak ukáže
+Objednávky se samy zavřou v okamžiku `ORDERS_CLOSE_AT` (teď 15. 10. 2026 ve 23:59). Zavřít je hned jde
+přepsáním `ORDERS_OPEN = true` na `false` a nasazením nové verze. Stránka pak ukáže
 „Objednávky jsou už uzavřené“ a nové objednávky ani změny nepřijme. Správa objednávek funguje dál.
 
 ### Kontrola nastavení
@@ -79,7 +80,8 @@ Vše je v `index.html` v bloku `CONFIG`:
 
 ## 3. Zveřejnění
 
-Nahrajte složku `objednavka` (tedy `index.html` a složku `img`) na svůj hosting nebo zapněte GitHub Pages.
+Stránka běží na GitHub Pages: **https://56dvyn7726-tech.github.io/Gotyourprint/CLS/** (správa: `…/CLS/#sprava`).
+Stará adresa `…/objednavka/` automaticky přesměruje sem. Na vlastní hosting nahrajte složku `CLS` (`index.html`, `qrcode.js` a složku `img`).
 Odkaz pak rozešlete lidem. Do stávajícího webu stránku vložíte přes `<iframe>`.
 
 ## Bezpečnost

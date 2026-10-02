@@ -7,8 +7,10 @@
 // Dokud tu zůstane výchozí nebo krátké heslo, správa objednávek se neotevře.
 const ADMIN_PASSWORD = 'ZMENTE-TOTO-HESLO';
 
-// Přijímání objednávek: po uzávěrce přepište na false (a nasaďte novou verzi).
+// Přijímání objednávek: false = zavřít hned (a nasadit novou verzi).
 const ORDERS_OPEN = true;
+// Uzávěrka: po tomto okamžiku se objednávky zavřou samy (prázdné = bez automatické uzávěrky).
+const ORDERS_CLOSE_AT = '2026-10-15T23:59:59+02:00';
 
 // ---- Platba převodem ----
 const BANK_ACCOUNT = '';                     // číslo účtu, např. '123456789/0100', '19-123456789/0800' nebo IBAN 'CZ65 0800 …' (prázdné = platbu nezobrazovat)
@@ -21,10 +23,10 @@ const SEND_CONFIRMATION = true;              // false = e-maily neposílat
 const SHOP_NAME = '';                        // jméno odesílatele a podpis v e-mailu (prázdné = jméno vašeho účtu Google, bez podpisu)
 const ORDER_TITLE = 'Combat Life Saver';     // co se objednává
 const OWNER_EMAIL = '';                      // váš e-mail: dostanete kopii každého potvrzení (prázdné = ne)
-const PAGE_URL = '';                         // odkaz na objednávkovou stránku (vloží se do e-mailu)
+const PAGE_URL = 'https://56dvyn7726-tech.github.io/Gotyourprint/CLS/'; // odkaz na objednávkovou stránku (vloží se do e-mailu)
 // Doplňující text do e-mailu, např. kde si trička vyzvednout. Každý řádek zvlášť.
 const EMAIL_INFO = [
-  // 'Trička budou k vyzvednutí přibližně 3 týdny po uzávěrce objednávek.',
+  'Objednávky přijímáme do 15. 10. 2026. Trička vám doručíme na váš domovský útvar.',
 ];
 
 // Nabídka: ceny za kus, barvy a velikosti podle střihu. Musí odpovídat stránce.
@@ -42,11 +44,15 @@ const LIMIT_NEW_TOTAL = 300;       // nových objednávek celkem
 const LIMIT_SAVES_PER_ORDER = 30;  // úprav jedné objednávky
 
 const SHEET_NAME = 'Objednávky';
-const HEADER = ['ID', 'VS', 'Vytvořeno', 'Upraveno', 'Jméno', 'Telefon', 'E-mail', 'Poznámka', 'Položky', 'Kusů', 'Cena (Kč)', 'Zaplaceno', 'Data (nemazat)'];
+const HEADER = ['ID', 'VS', 'Vytvořeno', 'Upraveno', 'Jméno', 'Telefon', 'E-mail', 'Útvar', 'Poznámka', 'Položky', 'Kusů', 'Cena (Kč)', 'Zaplaceno', 'Data (nemazat)'];
 // pořadí sloupců (od 0)
-const COL = { id: 0, vs: 1, created: 2, updated: 3, name: 4, phone: 5, email: 6, note: 7, itemsText: 8, count: 9, price: 10, paid: 11, data: 12 };
+const COL = { id: 0, vs: 1, created: 2, updated: 3, name: 4, phone: 5, email: 6, unit: 7, note: 8, itemsText: 9, count: 10, price: 11, paid: 12, data: 13 };
 
-const SCRIPT_VERSION = 4;
+const SCRIPT_VERSION = 5;
+
+function ordersOpen() {
+  return ORDERS_OPEN && !(ORDERS_CLOSE_AT && new Date() > new Date(ORDERS_CLOSE_AT));
+}
 
 // Otevřete adresu skriptu v prohlížeči: ukáže, jestli je vše nastavené.
 function doGet() {
@@ -60,8 +66,8 @@ function doGet() {
       : 'CHYBA – číslo účtu "' + BANK_ACCOUNT + '" má špatný tvar, správně např. 123456789/0100',
     emaily: SEND_CONFIRMATION ? 'zapnuté' + (PAGE_URL ? '' : ' (POZOR – chybí PAGE_URL)') : 'vypnuté',
     heslo: passwordOk() ? 'nastavené' : 'POZOR – změňte ADMIN_PASSWORD (aspoň 8 znaků), do té doby je správa zablokovaná',
-    objednavky: ORDERS_OPEN ? 'otevřené' : 'UZAVŘENÉ',
-    open: ORDERS_OPEN,
+    objednavky: ordersOpen() ? 'otevřené' + (ORDERS_CLOSE_AT ? ' do ' + Utilities.formatDate(new Date(ORDERS_CLOSE_AT), 'Europe/Prague', 'd. M. yyyy H:mm') : '') : 'UZAVŘENÉ',
+    open: ordersOpen(),
   });
 }
 
@@ -78,10 +84,10 @@ function doPost(e) {
   try {
     switch (req.action) {
       case 'save':
-        if (!ORDERS_OPEN) return out({ ok: false, error: 'closed' });
+        if (!ordersOpen()) return out({ ok: false, error: 'closed' });
         return out(saveOrder(req.order));
       case 'cancel': {
-        if (!ORDERS_OPEN) return out({ ok: false, error: 'closed' });
+        if (!ordersOpen()) return out({ ok: false, error: 'closed' });
         const removed = removeOrder(req.id, false);
         if (removed) sendMail('cancel', removed);
         return out({ ok: true });
@@ -192,7 +198,8 @@ function saveOrder(o) {
   const name = safe(o.name, 100);
   const phone = safe(o.phone, 30);
   const email = safe(o.email, 120);
-  if (!name || !phone || !email) throw new Error('missing name/phone/email');
+  const unit = safe(o.unit, 100);
+  if (!name || !phone || !email || !unit) throw new Error('missing name/phone/email/unit');
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) throw new Error('bad email');
 
   // jen položky z nabídky, např. "FIT Černá M"
@@ -234,6 +241,7 @@ function saveOrder(o) {
   row[COL.name] = name;
   row[COL.phone] = phone;
   row[COL.email] = email;
+  row[COL.unit] = unit;
   row[COL.note] = safe(o.note, 500);
   row[COL.itemsText] = itemsText;
   row[COL.count] = count;
@@ -242,7 +250,7 @@ function saveOrder(o) {
   row[COL.data] = JSON.stringify(items);
 
   // beze změny = nic neukládat ani neposílat (ochrana proti opakovanému klikání)
-  const changed = !old || [COL.name, COL.phone, COL.email, COL.note, COL.data].some(function (i) { return String(old[i]) !== String(row[i]); });
+  const changed = !old || [COL.name, COL.phone, COL.email, COL.unit, COL.note, COL.data].some(function (i) { return String(old[i]) !== String(row[i]); });
   if (!changed) {
     return { ok: true, updated: new Date(old[COL.updated]).toISOString(), emailSent: false, payment: paymentInfo(vs, price, name) };
   }
@@ -299,6 +307,7 @@ function rowToOrder(r) {
     name: strip(r[COL.name]),
     phone: strip(r[COL.phone]),
     email: strip(r[COL.email]),
+    unit: strip(r[COL.unit]),
     note: strip(r[COL.note]),
     paid: iso(r[COL.paid]),
     items: items,
@@ -424,6 +433,7 @@ function sendMail(kind, o) {
 
     const contact = showOrder
       ? '<p style="margin:12px 0;color:#555">Kontakt: ' + esc(o.name) + ', ' + esc(o.phone) + ', ' + esc(o.email) +
+        (o.unit ? '<br>Doručení na útvar: ' + esc(o.unit) : '') +
         (o.note ? '<br>Poznámka: ' + esc(o.note) : '') + '</p>'
       : '';
     const info = showOrder ? EMAIL_INFO.map(function (t) { return '<p style="margin:8px 0">' + esc(t) + '</p>'; }).join('') : '';
