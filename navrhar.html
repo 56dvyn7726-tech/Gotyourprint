@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GotYourPrint – trička s vlastním potiskem</title>
+  <meta name="description" content="Navrhněte si vlastní tričko: vyberte typ, barvu, velikost a nahrajte obrázek k potisku.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="brand">Got<span>Your</span>Print</div>
+    <p class="tagline">Trička s vlastním potiskem – navrhněte si je sami</p>
+  </header>
+
+  <main class="designer">
+    <!-- Náhled trička -->
+    <section class="preview-panel" aria-label="Náhled trička">
+      <div class="side-switch" role="tablist">
+        <button type="button" class="side-btn active" data-side="front" role="tab" aria-selected="true">Přední strana</button>
+        <button type="button" class="side-btn" data-side="back" role="tab" aria-selected="false">Zadní strana</button>
+      </div>
+
+      <div class="canvas-wrap" id="canvasWrap">
+        <canvas id="shirtCanvas" width="500" height="600" aria-label="Náhled trička s potiskem"></canvas>
+        <div class="drop-hint" id="dropHint">Pusťte obrázek sem</div>
+      </div>
+      <p class="hint">Obrázek posunete tažením myší / prstem, velikost změníte kolečkem myši nebo posuvníkem.</p>
+    </section>
+
+    <!-- Konfigurace -->
+    <section class="options-panel">
+      <div class="step">
+        <h2><span class="num">1</span> Typ trička</h2>
+        <div class="type-grid" id="typeOptions"></div>
+      </div>
+
+      <div class="step">
+        <h2><span class="num">2</span> Barva <small id="colorName"></small></h2>
+        <div class="color-grid" id="colorOptions"></div>
+      </div>
+
+      <div class="step">
+        <h2><span class="num">3</span> Velikost</h2>
+        <div class="size-grid" id="sizeOptions"></div>
+        <details class="size-table">
+          <summary>Tabulka velikostí</summary>
+          <table>
+            <thead><tr><th>Velikost</th><th>Šířka (cm)</th><th>Délka (cm)</th></tr></thead>
+            <tbody id="sizeTable"></tbody>
+          </table>
+        </details>
+      </div>
+
+      <div class="step">
+        <h2><span class="num">4</span> Váš obrázek – <span id="sideLabel">přední strana</span></h2>
+        <label class="upload-box" id="uploadBox">
+          <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp,image/svg+xml">
+          <strong>Klikněte pro nahrání obrázku</strong>
+          <span>nebo jej přetáhněte na tričko · PNG, JPG, WEBP, SVG · max 15 MB</span>
+        </label>
+        <p class="warning" id="qualityWarning" hidden></p>
+
+        <div class="image-controls" id="imageControls" hidden>
+          <label>Velikost
+            <input type="range" id="scaleRange" min="10" max="200" value="100">
+          </label>
+          <label>Otočení
+            <input type="range" id="rotateRange" min="-180" max="180" value="0">
+          </label>
+          <div class="btn-row">
+            <button type="button" class="btn small" id="centerBtn">Vycentrovat</button>
+            <button type="button" class="btn small" id="fitBtn">Přes celou plochu</button>
+            <button type="button" class="btn small danger" id="removeBtn">Odstranit</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <h2><span class="num">5</span> Počet kusů</h2>
+        <div class="qty">
+          <button type="button" class="btn small" id="qtyMinus" aria-label="Méně">−</button>
+          <input type="number" id="qtyInput" min="1" max="500" value="1">
+          <button type="button" class="btn small" id="qtyPlus" aria-label="Více">+</button>
+        </div>
+      </div>
+
+      <div class="summary" id="summary"></div>
+
+      <div class="btn-row">
+        <button type="button" class="btn" id="downloadBtn">Stáhnout náhled</button>
+        <button type="button" class="btn primary" id="orderOpenBtn">Pokračovat k objednávce</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Objednávkový formulář -->
+  <dialog id="orderDialog">
+    <form id="orderForm" method="dialog">
+      <h2>Dokončení objednávky</h2>
+      <div class="order-recap" id="orderRecap"></div>
+
+      <label>Jméno a příjmení *
+        <input name="name" required autocomplete="name">
+      </label>
+      <label>E-mail *
+        <input name="email" type="email" required autocomplete="email">
+      </label>
+      <label>Telefon
+        <input name="phone" type="tel" autocomplete="tel">
+      </label>
+      <label>Doručovací adresa *
+        <textarea name="address" rows="3" required autocomplete="street-address"></textarea>
+      </label>
+      <label>Poznámka
+        <textarea name="note" rows="2"></textarea>
+      </label>
+      <label class="check">
+        <input type="checkbox" name="consent" required>
+        Souhlasím se zpracováním osobních údajů pro vyřízení objednávky a potvrzuji, že mám práva k nahranému obrázku.
+      </label>
+
+      <p class="form-status" id="formStatus" role="status"></p>
+
+      <div class="btn-row">
+        <button type="button" class="btn" id="orderCancelBtn">Zpět</button>
+        <button type="submit" class="btn primary" id="orderSubmitBtn">Odeslat objednávku</button>
+      </div>
+    </form>
+  </dialog>
+
+  <footer class="site-footer">© GotYourPrint</footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

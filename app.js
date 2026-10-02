@@ -10,7 +10,7 @@ const CONFIG = {
   // 2) Pokud necháte prázdné, otevře se e-mailový klient zákazníka
   //    a náhledy se mu stáhnou, aby je mohl přiložit.
   orderEndpoint: "",
-  orderEmail: "objednavky@gotyourprint.cz",
+  orderEmail: "",                 // e-mail, kam chodí objednávky (prázdné = objednávání vypnuté)
 
   currency: "Kč",
   printPricePerSide: 150,          // cena potisku jedné strany
@@ -648,6 +648,13 @@ form.addEventListener("submit", async (e) => {
     } finally {
       submitBtn.disabled = false;
     }
+    return;
+  }
+
+  // Bez nastaveného příjemce objednávky neodesíláme (nikam by nedorazily).
+  if (!CONFIG.orderEmail) {
+    statusEl.className = "form-status err";
+    statusEl.textContent = "Objednávání přes tuto stránku zatím není spuštěné.";
     return;
   }
 

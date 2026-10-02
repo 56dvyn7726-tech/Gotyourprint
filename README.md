@@ -51,7 +51,7 @@ Otevřete `app.js` a upravte `CONFIG`:
   <iframe src="https://VASE-ADRESA/index.html" style="width:100%;height:1300px;border:0" title="Návrhář triček"></iframe>
   ```
 
-Pro vyzkoušení stačí otevřít `index.html` v prohlížeči.
+Návrhář je v souboru `navrhar.html` (objednávání je v něm vypnuté, dokud v `app.js` nevyplníte `orderEmail` nebo `orderEndpoint`). Hlavní adresa webu přesměrovává na objednávku triček CLS ve složce `CLS/`.
 
 ## Zahradník (mobilní aplikace)
 

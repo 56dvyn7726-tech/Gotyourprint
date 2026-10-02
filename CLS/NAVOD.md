@@ -30,7 +30,7 @@ a heslo do správy je `tricka`. Pro ostrý provoz udělejte kroky níže.
    - *Kdo má přístup:* **Kdokoli**
 6. Klikněte na **Nasadit** a povolte přístup k účtu Google.
 7. Zkopírujte **URL webové aplikace**. Vypadá jako `https://script.google.com/macros/s/…/exec`.
-8. V `index.html` najděte `scriptUrl: ""` a URL vložte mezi uvozovky.
+8. V `app.js` najděte `scriptUrl: ""` a URL vložte mezi uvozovky.
 
 Objednávky se od té chvíle ukládají do listu **Objednávky** ve vaší tabulce. Najdete je tam i bez stránky.
 
@@ -76,7 +76,7 @@ e-maily, heslo a jestli jsou objednávky otevřené.
 
 ## 2. Úpravy
 
-Vše je v `index.html` v bloku `CONFIG`:
+Vše je v `app.js` v bloku `CONFIG` (vzhled stránky je v `index.html`):
 - `title`: název (potisk) nahoře na stránce,
 - `deadline`: text s termínem uzávěrky (např. „Objednávky do 15. 10.“),
 - `variants`: barvy a fotky (`img/cerna.jpg`, `img/oliva.jpg`),
@@ -86,7 +86,7 @@ Vše je v `index.html` v bloku `CONFIG`:
 ## 3. Zveřejnění
 
 Stránka běží na GitHub Pages: **https://56dvyn7726-tech.github.io/Gotyourprint/CLS/** (správa: `…/CLS/#sprava`).
-Stará adresa `…/objednavka/` automaticky přesměruje sem. Na vlastní hosting nahrajte složku `CLS` (`index.html`, `qrcode.js` a složku `img`).
+Stará adresa `…/objednavka/` automaticky přesměruje sem. Na vlastní hosting nahrajte složku `CLS` (`index.html`, `app.js`, `qrcode.js` a složku `img`).
 Odkaz pak rozešlete lidem. Do stávajícího webu stránku vložíte přes `<iframe>`.
 
 ## Bezpečnost
@@ -99,3 +99,8 @@ Odkaz pak rozešlete lidem. Do stávajícího webu stránku vložíte přes `<if
 - Text, který by tabulka nebo Excel spustily jako vzorec, se ukládá jako obyčejný text.
 - Zákazník musí zaškrtnout souhlas se zpracováním údajů. Po vyřízení objednávek data z tabulky smažte.
 - Google Tabulku nesdílejte s nikým, kdo k objednávkám nemá mít přístup.
+- Stránka má bezpečnostní pravidla prohlížeče (Content-Security-Policy): spustí jen vlastní skripty
+  a spojí se jen s Googlem. Správa má tlačítko **Odhlásit** a nedá se otevřít uvnitř cizí stránky.
+- Kód stránky i skriptu je veřejný (repozitář je veřejný, jinak by GitHub Pages nebyly zdarma). Nejsou v něm
+  žádná hesla ani čísla účtů – ty jsou jen ve vašem Apps Scriptu u Googlu.
+- V Apps Scriptu mějte aktivní **jen jedno nasazení**. Staré adresy skriptu jsou v historii veřejného repozitáře.
