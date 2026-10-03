@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors, fonts } from './ui';
+import { colors, font } from './ui';
 
 /** Značka rostliny na mapě – emoji v kruhu, barva okraje podle dnešní potřeby vody. */
 export function PlantPin({
@@ -55,5 +55,5 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     maxWidth: 140,
   },
-  labelText: { color: colors.white, fontFamily: fonts.bold, fontSize: 12 },
+  labelText: { color: colors.white, ...font.bold, fontSize: 12 },
 });

@@ -6,7 +6,7 @@ import { ActivityIndicator, Keyboard, Pressable, StyleSheet, Text, View } from '
 import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MapViewState, SatelliteMap } from '../components/SatelliteMap';
-import { Button, colors, fonts, haptic, IconButton, Input, shadow, T } from '../components/ui';
+import { Button, colors, font, haptic, IconButton, Input, shadow, T } from '../components/ui';
 import { notify } from '../lib/dialog';
 import { Address, placeName, searchAddress } from '../lib/geocode';
 import { useStore } from '../lib/store';
@@ -177,8 +177,8 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   result: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12 },
-  resultTitle: { fontFamily: fonts.bold, fontSize: 15, color: colors.text },
-  resultSub: { fontFamily: fonts.medium, fontSize: 13, color: colors.muted },
+  resultTitle: { ...font.bold, fontSize: 15, color: colors.text },
+  resultSub: { ...font.medium, fontSize: 13, color: colors.muted },
   gps: { position: 'absolute', right: 12 },
   crosshair: { position: 'absolute', left: '50%', top: '50%', marginLeft: -24, marginTop: -46, alignItems: 'center' },
   pinShadow: { textShadowColor: 'rgba(0,0,0,0.5)', textShadowRadius: 8, textShadowOffset: { width: 0, height: 2 } },

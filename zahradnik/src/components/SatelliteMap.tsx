@@ -3,7 +3,7 @@ import { GestureResponderEvent, Image, PanResponder, Platform, Pressable, StyleP
 import Svg, { Circle, Line, Polygon, Polyline } from 'react-native-svg';
 import { LatLon } from '../types';
 import { MAX_TILE_ZOOM, project, TILE_ATTRIBUTION, TILE_SIZE, tileUrl, unproject } from '../lib/geo';
-import { fonts } from './ui';
+import { font } from './ui';
 
 export interface MapViewState {
   center: LatLon;
@@ -350,5 +350,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
-  attributionText: { color: 'rgba(255,255,255,0.85)', fontSize: 9, fontFamily: fonts.medium },
+  attributionText: { color: 'rgba(255,255,255,0.85)', fontSize: 9, ...font.medium },
 });

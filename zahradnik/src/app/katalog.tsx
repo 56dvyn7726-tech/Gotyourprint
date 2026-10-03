@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Avatar, Chip, colors, fonts, haptic, Input, T } from '../components/ui';
+import { Avatar, Chip, colors, font, haptic, Input, T } from '../components/ui';
 import { CATEGORY_TINT } from '../data/categories';
 import { CATEGORIES, PLANTS } from '../data/plants';
 import { useStore } from '../lib/store';
@@ -83,7 +83,7 @@ function normalize(s: string) {
 
 const styles = StyleSheet.create({
   container: { padding: 16, paddingBottom: 40, gap: 12 },
-  tile: { flex: 1, backgroundColor: colors.surface, borderRadius: 24, padding: 10, boxShadow: '0 2px 8px rgba(18, 58, 41, 0.06)', maxWidth: '50%' },
+  tile: { flex: 1, backgroundColor: colors.surface, borderRadius: 24, padding: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)', boxShadow: '0 4px 16px rgba(20,60,40,0.07)', maxWidth: '50%' },
   art: { height: 96, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   owned: {
     position: 'absolute',
@@ -96,9 +96,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  name: { fontFamily: fonts.bold, fontSize: 15, color: colors.text, marginTop: 10, paddingHorizontal: 4 },
-  latin: { fontFamily: fonts.medium, fontSize: 12, color: colors.muted, fontStyle: 'italic', paddingHorizontal: 4 },
+  name: { ...font.bold, fontSize: 15, color: colors.text, marginTop: 10, paddingHorizontal: 4 },
+  latin: { ...font.medium, fontSize: 12, color: colors.muted, fontStyle: 'italic', paddingHorizontal: 4 },
   tags: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6, paddingHorizontal: 4, paddingBottom: 4 },
-  tag: { fontFamily: fonts.semibold, fontSize: 11, color: colors.muted },
+  tag: { ...font.semibold, fontSize: 11, color: colors.muted },
   dot: { color: colors.faint },
 });

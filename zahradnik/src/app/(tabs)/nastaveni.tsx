@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, Card, Chip, colors, fonts, IconName, Input, T, TAB_BAR_SPACE } from '../../components/ui';
+import { Button, Card, Chip, colors, font, IconName, Input, T, TAB_BAR_SPACE } from '../../components/ui';
 import { notify } from '../../lib/dialog';
 import { formatArea, polygonArea } from '../../lib/geo';
 import { cancelReminders, scheduleDailyReminder } from '../../lib/notifications';
@@ -143,7 +143,7 @@ export default function SettingsScreen() {
               Počasí: Open-Meteo.com · Satelitní snímky: Esri, Maxar, Earthstar Geographics · Adresy: © přispěvatelé OpenStreetMap
             </T>
             <T v="small" style={{ marginTop: 6 }}>
-              Zahradník 1.1
+              Zahradník 1.2
             </T>
           </View>
         </Group>
@@ -191,11 +191,11 @@ function Row({ icon, tint, title, value, onPress }: { icon: IconName; tint: stri
 const styles = StyleSheet.create({
   container: { paddingHorizontal: 16, paddingBottom: TAB_BAR_SPACE },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 12 },
-  rowTitle: { flex: 1, fontFamily: fonts.semibold, fontSize: 15, color: colors.text },
-  rowValue: { fontFamily: fonts.medium, fontSize: 13, color: colors.muted, marginTop: 1 },
+  rowTitle: { flex: 1, ...font.semibold, fontSize: 15, color: colors.text },
+  rowValue: { ...font.medium, fontSize: 13, color: colors.muted, marginTop: 1 },
   iconTile: { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   field: { paddingHorizontal: 14, paddingVertical: 12 },
   wrap: { flexDirection: 'row', flexWrap: 'wrap' },
   ok: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 },
-  okText: { fontFamily: fonts.semibold, fontSize: 13, color: colors.primaryBright },
+  okText: { ...font.semibold, fontSize: 13, color: colors.primaryBright },
 });

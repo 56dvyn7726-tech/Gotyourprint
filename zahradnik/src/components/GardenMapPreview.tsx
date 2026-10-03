@@ -7,7 +7,7 @@ import { useStore } from '../lib/store';
 import { useAdvice, VERDICT } from '../lib/verdict';
 import { MapViewState, SatelliteMap } from './SatelliteMap';
 import { PlantPin } from './PlantPin';
-import { colors, fonts, shadow } from './ui';
+import { colors, font, shadow } from './ui';
 
 /** Malý náhled plánu zahrady; klepnutím otevře celou mapu. */
 export function GardenMapPreview({ height = 180, onPress }: { height?: number; onPress: () => void }) {
@@ -93,5 +93,5 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     borderRadius: 999,
   },
-  badgeText: { fontFamily: fonts.bold, fontSize: 13, color: colors.forest },
+  badgeText: { ...font.bold, fontSize: 13, color: colors.forest },
 });
