@@ -9,7 +9,7 @@ const CONFIG = {
   demoAccount: "123456789/0100", // smyšlený účet jen pro ukázkový režim (skutečný účet se nastavuje ve skriptu Google)
 
   title: "Combat Life Saver",
-  deadline: "Objednávky přijímáme do 15. 10. 2026 · trička doručíme na váš domovský útvar",
+  deadline: "Objednávky přijímáme do 30. 11. 2026 · trička doručíme na váš domovský útvar",
 
   variants: [
     { id: "cerna", name: "Černá", print: "bílý potisk", color: "#161616", img: "img/cerna.jpg" },

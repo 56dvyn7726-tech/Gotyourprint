@@ -65,7 +65,7 @@ Běžný účet Gmail zvládne asi **100 e-mailů denně** (s kopií pro vás se
 
 ### Uzávěrka
 
-Objednávky se samy zavřou v okamžiku `ORDERS_CLOSE_AT` (teď 15. 10. 2026 ve 23:59). Zavřít je hned jde
+Objednávky se samy zavřou v okamžiku `ORDERS_CLOSE_AT` (teď 30. 11. 2026 ve 23:59). Zavřít je hned jde
 přepsáním `ORDERS_OPEN = true` na `false` a nasazením nové verze. Stránka pak ukáže
 „Objednávky jsou už uzavřené“ a nové objednávky ani změny nepřijme. Správa objednávek funguje dál.
 

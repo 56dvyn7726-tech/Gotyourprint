@@ -11,7 +11,7 @@ const ADMIN_PASSWORD = 'ZMENTE-TOTO-HESLO';
 // Přijímání objednávek: false = zavřít hned (a nasadit novou verzi).
 const ORDERS_OPEN = true;
 // Uzávěrka: po tomto okamžiku se objednávky zavřou samy (prázdné = bez automatické uzávěrky).
-const ORDERS_CLOSE_AT = '2026-10-15T23:59:59+02:00';
+const ORDERS_CLOSE_AT = '2026-11-30T23:59:59+01:00';
 
 // ---- Platba převodem ----
 const BANK_ACCOUNT = '';                     // číslo účtu, např. '123456789/0100', '19-123456789/0800' nebo IBAN 'CZ65 0800 …' (prázdné = platbu nezobrazovat)
@@ -27,7 +27,7 @@ const OWNER_EMAIL = '';                      // váš e-mail: dostanete kopii ka
 const PAGE_URL = 'https://56dvyn7726-tech.github.io/Gotyourprint/CLS/'; // odkaz na objednávkovou stránku (vloží se do e-mailu)
 // Doplňující text do e-mailu, např. kde si trička vyzvednout. Každý řádek zvlášť.
 const EMAIL_INFO = [
-  'Objednávky přijímáme do 15. 10. 2026. Trička vám doručíme na váš domovský útvar.',
+  'Objednávky přijímáme do 30. 11. 2026. Trička vám doručíme na váš domovský útvar.',
 ];
 
 // Nabídka: ceny za kus, barvy a velikosti podle střihu. Musí odpovídat stránce.
